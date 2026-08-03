@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Demo Realty — Verified Property Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --ink: #14161a;
+    --paper: #ffffff;
+    --stone: #eef0ec;
+    --brass: #b8863b;
+    --brass-dark: #96692b;
+    --ledger: #2f6f4f;
+    --rust: #a6402f;
+    --slate: #6b7280;
+    --line: #d9d8d0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--stone);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+  h1, h2, .display { font-family: "Fraunces", Georgia, serif; font-weight: 500; margin: 0; letter-spacing: -0.01em; }
+
+  /* ---------- Nav ---------- */
+  nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 22px 6vw; position: relative; z-index: 10;
+  }
+  .logo { font-family: "Fraunces", serif; font-size: 19px; }
+  .logo-sub { font-family: "IBM Plex Mono", monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass-dark); }
+  .nav-links { display: flex; gap: 28px; font-size: 13px; color: var(--slate); }
+  .nav-links a { color: inherit; text-decoration: none; }
+
+  /* ---------- Hero: survey-grid backdrop ---------- */
+  .hero {
+    position: relative;
+    padding: 8vh 6vw 10vh;
+    overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.55;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black 40%, transparent 100%);
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 720px; }
+  .hero .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--brass-dark); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .hero .eyebrow::before { content: ""; width: 16px; height: 1px; background: var(--brass-dark); display: inline-block; }
+  .hero h1 { font-size: clamp(34px, 5.5vw, 58px); line-height: 1.05; margin-bottom: 20px; }
+  .hero h1 em { font-style: italic; color: var(--brass-dark); }
+  .hero p.sub { font-size: 16px; color: var(--slate); max-width: 480px; margin-bottom: 32px; line-height: 1.6; }
+
+  .cta-row { display: flex; gap: 14px; align-items: center; }
+  .btn-primary {
+    background: var(--ink); color: #fff; border: none; padding: 13px 26px; border-radius: 4px;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: "Inter", sans-serif;
+  }
+  .btn-primary:hover { background: #000; }
+  .cta-hint { font-size: 12px; color: var(--slate); }
+
+  .hero-stats { display: flex; gap: 40px; margin-top: 56px; }
+  .hero-stats .stat-num { font-family: "IBM Plex Mono", monospace; font-size: 26px; color: var(--ink); }
+  .hero-stats .stat-label { font-size: 11px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+  /* ---------- Listings ---------- */
+  .listings { padding: 4vh 6vw 10vh; }
+  .listings-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  .listings-head .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); margin-bottom: 6px; }
+  .listings-head h2 { font-size: 28px; }
+
+  /* ---------- Filter bar (grid-based: no overlap, wraps cleanly at any width) ---------- */
+  .filter-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 6px; padding: 16px; margin-bottom: 26px;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .filter-field label {
+    font-family: "IBM Plex Mono", monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--slate);
+  }
+  .filter-field input, .filter-field select {
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; font-family: "Inter", sans-serif;
+    font-size: 13px; background: #fff; width: 100%; min-width: 0;
+  }
+  .filter-field.price-pair { grid-column: span 2; flex-direction: row; gap: 8px; }
+  .filter-field.price-pair > div { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+  .filter-actions { display: flex; gap: 8px; align-items: flex-end; }
+  .btn-filter {
+    background: var(--brass); color: #fff; border: none; padding: 9px 16px; border-radius: 4px;
+    font-size: 13px; font-weight: 600; cursor: pointer; flex: 1;
+  }
+  .btn-filter:hover { background: var(--brass-dark); }
+  .btn-clear {
+    background: transparent; border: 1px solid var(--line); color: var(--slate); padding: 9px 14px;
+    border-radius: 4px; font-size: 13px; cursor: pointer; flex: 1;
+  }
+  @media (max-width: 640px) {
+    .filter-bar { grid-template-columns: 1fr 1fr; padding: 12px; }
+    .filter-field.price-pair { grid-column: span 2; }
+    .filter-actions { grid-column: span 2; }
+  }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px; }
+
+  .plot-card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .plot-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(20,22,26,0.08); }
+  .plot-photo { height: 170px; background: linear-gradient(135deg, #e3e1d7, #f3f2ec); position: relative; overflow: hidden; }
+  .plot-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .plot-photo .status-pin {
+    position: absolute; top: 10px; left: 10px; font-family: "IBM Plex Mono", monospace; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px; border-radius: 3px; background: rgba(255,255,255,0.92);
+    color: var(--ledger);
+  }
+  .plot-body { padding: 18px; }
+  .plot-code { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--slate); letter-spacing: 0.05em; }
+  .plot-title { font-size: 16px; margin: 4px 0 6px; font-family: "Fraunces", serif; }
+  .plot-loc { font-size: 12px; color: var(--slate); margin-bottom: 12px; }
+
+  .plot-dims {
+    display: flex; gap: 0; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink);
+    border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); padding: 8px 0; margin-bottom: 12px;
+  }
+  .plot-dims span { flex: 1; text-align: center; border-right: 1px dashed var(--line); }
+  .plot-dims span:last-child { border-right: none; }
+  .plot-dims .dim-label { display: block; font-size: 8px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+  .plot-price { display: flex; justify-content: space-between; align-items: baseline; }
+  .plot-price .amount { font-family: "IBM Plex Mono", monospace; font-size: 18px; font-weight: 500; }
+  .plot-price .cur { font-size: 10px; color: var(--slate); margin-right: 4px; }
+
+  .empty-note { color: var(--slate); font-size: 13px; padding: 40px 0; text-align: center; }
+
+  /* ---------- Footer ---------- */
+  footer { padding: 28px 6vw; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 12px; color: var(--slate); }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .hero-stats { gap: 24px; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+  <nav>
+    <div>
+      <div class="logo">Demo Realty</div>
+      <div class="logo-sub">Verified Property Intelligence</div>
+    </div>
+    <div class="nav-links">
+      <a href="#listings">Listings</a>
+      <a href="#" onclick="return false;">Sell With Us</a>
+      <a href="#" onclick="return false;">Contact</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="eyebrow">Every listing, verified against live records</div>
+      <h1>Find your next address, <em>not a guess</em>.</h1>
+      <p class="sub">
+        Ask in plain language — size, area, budget — and get matches pulled straight from
+        our current inventory. No outdated listings, no invented prices.
+      </p>
+      <div class="cta-row">
+        <button class="btn-primary" onclick="document.querySelector('.aiw-bubble')?.click()">Ask our AI assistant</button>
+        <span class="cta-hint">or click the chat icon, bottom right</span>
+      </div>
+      <div class="hero-stats" id="hero-stats">
+        <div><div class="stat-num mono">—</div><div class="stat-label">Verified listings</div></div>
+        <div><div class="stat-num mono">Live</div><div class="stat-label">Price & status sync</div></div>
+        <div><div class="stat-num mono">24/7</div><div class="stat-label">AI response time</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="listings" id="listings">
+    <div class="listings-head">
+      <div>
+        <div class="eyebrow">Current Inventory</div>
+        <h2>Browse listings</h2>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-field">
+        <label>City</label>
+        <input type="text" id="f-city" placeholder="e.g. Lahore" />
+      </div>
+      <div class="filter-field">
+        <label>Area</label>
+        <input type="text" id="f-area" placeholder="e.g. DHA Phase 6" />
+      </div>
+      <div class="filter-field">
+        <label>Type</label>
+        <select id="f-type">
+          <option value="">Any</option>
+          <option value="house">House</option>
+          <option value="apartment">Apartment</option>
+          <option value="plot">Plot</option>
+          <option value="commercial">Commercial</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>Purpose</label>
+        <select id="f-purpose">
+          <option value="">Any</option>
+          <option value="sale">Sale</option>
+          <option value="rent">Rent</option>
+        </select>
+      </div>
+      <div class="filter-field price-pair">
+        <div>
+          <label>Min Price</label>
+          <input type="number" id="f-min-price" placeholder="0" />
+        </div>
+        <div>
+          <label>Max Price</label>
+          <input type="number" id="f-max-price" placeholder="Any" />
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-filter" onclick="applyFilters()">Search</button>
+        <button class="btn-clear" onclick="clearFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="grid" id="listings-grid">
+      <div class="empty-note">Loading verified listings…</div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Demo Realty — a live demo built on your own inventory</span>
+    <span class="mono">Powered by verified property intelligence</span>
+  </footer>
+
+  <script>
+    // ---- Config: same project as the admin dashboard + widget ----
+    const ORG_ID = "11111111-1111-1111-1111-111111111111";
+    const SUPABASE_URL = "https://wduuigczfxotwuotafvl.supabase.co";
+    const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_KEY_HERE";
+
+    async function loadListings(filters = {}) {
+      const grid = document.getElementById("listings-grid");
+      grid.innerHTML = `<div class="empty-note">Searching…</div>`;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_property_search`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            p_org_id: ORG_ID,
+            p_city: filters.city || null,
+            p_area: filters.area || null,
+            p_property_type: filters.propertyType || null,
+            p_purpose: filters.purpose || null,
+            p_min_price: filters.minPrice || null,
+            p_max_price: filters.maxPrice || null,
+            p_limit: 24,
+          }),
+        });
+        const properties = await res.json();
+
+        const statEl = document.querySelector("#hero-stats .stat-num");
+        if (statEl) statEl.textContent = (Array.isArray(properties) ? properties.length : 0) + "+";
+
+        if (!Array.isArray(properties) || properties.length === 0) {
+          grid.innerHTML = `<div class="empty-note">No listings match those filters right now.</div>`;
+          return;
+        }
+
+        grid.innerHTML = properties.map(renderCard).join("");
+      } catch (e) {
+        grid.innerHTML = `<div class="empty-note">Couldn't load listings right now.</div>`;
+        console.error(e);
+      }
+    }
+
+    function applyFilters() {
+      loadListings({
+        city: document.getElementById("f-city").value.trim(),
+        area: document.getElementById("f-area").value.trim(),
+        propertyType: document.getElementById("f-type").value,
+        purpose: document.getElementById("f-purpose").value,
+        minPrice: document.getElementById("f-min-price").value,
+        maxPrice: document.getElementById("f-max-price").value,
+      });
+    }
+
+    function clearFilters() {
+      document.getElementById("f-city").value = "";
+      document.getElementById("f-area").value = "";
+      document.getElementById("f-type").value = "";
+      document.getElementById("f-purpose").value = "";
+      document.getElementById("f-min-price").value = "";
+      document.getElementById("f-max-price").value = "";
+      loadListings();
+    }
+
+    function renderCard(p) {
+      const photo = p.images && p.images.length ? `<img src="${p.images[0]}" alt="${p.title}" />` : "";
+      return `
+        <div class="plot-card">
+          <div class="plot-photo">${photo}<span class="status-pin">${p.status}</span></div>
+          <div class="plot-body">
+            <div class="plot-code">${p.property_code}</div>
+            <div class="plot-title">${p.title}</div>
+            <div class="plot-loc">${[p.area, p.city].filter(Boolean).join(", ")}</div>
+            <div class="plot-dims">
+              <span>${p.bedrooms ?? "–"}<span class="dim-label">Beds</span></span>
+              <span>${p.bathrooms ?? "–"}<span class="dim-label">Baths</span></span>
+              <span>${p.size ?? "–"} ${p.size_unit ?? ""}<span class="dim-label">Size</span></span>
+            </div>
+            <div class="plot-price">
+              <span><span class="cur mono">${p.currency}</span><span class="amount">${Number(p.price).toLocaleString()}</span></span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    loadListings();
+  </script>
+
+  <!-- AI Chat Widget -->
+  <script
+    src="widget.js"
+    data-org-id="11111111-1111-1111-1111-111111111111"
+    data-supabase-url="https://wduuigczfxotwuotafvl.supabase.co"
+    data-supabase-anon-key="PASTE_YOUR_ANON_KEY_HERE"
+    data-function-url="https://wduuigczfxotwuotafvl.supabase.co/functions/v1/property-search"
+    data-agent-name="Sarah"
+  ></script>
+</body>
+</html>

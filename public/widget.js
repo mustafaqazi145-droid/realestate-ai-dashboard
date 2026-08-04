@@ -50,14 +50,22 @@
       border-radius: 50%; background: ${CONFIG.accent}; color: #fff; border: none;
       box-shadow: 0 8px 24px rgba(0,0,0,0.2); cursor: pointer; z-index: 999999;
       display: flex; align-items: center; justify-content: center; font-size: 24px;
+      animation: aiw-pulse 2.5s ease-in-out infinite; transition: transform 0.15s;
+    }
+    .aiw-bubble:hover { transform: scale(1.06); animation: none; }
+    @keyframes aiw-pulse {
+      0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 0 0 rgba(184,134,59,0.35); }
+      50% { box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 0 10px rgba(184,134,59,0); }
     }
     .aiw-panel {
       position: fixed; bottom: 92px; right: 24px; width: 360px; max-width: calc(100vw - 32px);
       height: 520px; max-height: calc(100vh - 140px); background: #fff; border-radius: 14px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.25); display: none; flex-direction: column;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25); display: flex; flex-direction: column;
       overflow: hidden; z-index: 999999; font-family: -apple-system, "Inter", sans-serif;
+      opacity: 0; transform: translateY(12px) scale(0.98); pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
     }
-    .aiw-panel.open { display: flex; }
+    .aiw-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
     .aiw-header {
       background: #14161a; color: #fff; padding: 16px 18px; display: flex;
       align-items: center; justify-content: space-between;

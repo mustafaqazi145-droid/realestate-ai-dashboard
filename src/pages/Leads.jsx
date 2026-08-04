@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
+import { showToast } from "../toast";
 
 const STATUS_OPTIONS = ["new", "contacted", "qualified", "viewing_scheduled", "negotiation", "won", "lost"];
 
@@ -26,6 +27,7 @@ export default function Leads() {
 
   async function updateStatus(id, status) {
     await supabase.from("leads").update({ lead_status: status, last_contact_at: new Date().toISOString() }).eq("id", id);
+    showToast(`Status updated to "${status.replace("_", " ")}"`);
     loadLeads();
   }
 
@@ -46,9 +48,10 @@ export default function Leads() {
     if (!confirm(`Delete ${selected.size} lead(s)? This can't be undone.`)) return;
     const { error } = await supabase.from("leads").delete().in("id", Array.from(selected));
     if (error) {
-      alert(`Couldn't delete selected leads: ${error.message}`);
+      showToast(`Couldn't delete selected leads: ${error.message}`, "error");
       return;
     }
+    showToast(`${selected.size} lead(s) deleted`);
     loadLeads();
   }
 
@@ -56,9 +59,10 @@ export default function Leads() {
     if (!confirm("Delete this lead? This can't be undone.")) return;
     const { error } = await supabase.from("leads").delete().eq("id", id);
     if (error) {
-      alert(`Couldn't delete: ${error.message}`);
+      showToast(`Couldn't delete: ${error.message}`, "error");
       return;
     }
+    showToast("Lead deleted");
     loadLeads();
   }
 

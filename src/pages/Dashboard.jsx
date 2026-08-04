@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import StatusBadge from "../components/StatusBadge";
 import PropertyFormModal from "../components/PropertyFormModal";
+import { showToast } from "../toast";
 
 export default function Dashboard({ profile }) {
   const [properties, setProperties] = useState([]);
@@ -29,9 +30,10 @@ export default function Dashboard({ profile }) {
     if (!confirm("Delete this property? This can't be undone.")) return;
     const { error } = await supabase.from("properties").delete().eq("id", id);
     if (error) {
-      alert(`Couldn't delete: ${error.message}`);
+      showToast(`Couldn't delete: ${error.message}`, "error");
       return;
     }
+    showToast("Property deleted");
     loadProperties();
   }
 
@@ -52,9 +54,10 @@ export default function Dashboard({ profile }) {
     if (!confirm(`Delete ${selected.size} propert${selected.size === 1 ? "y" : "ies"}? This can't be undone.`)) return;
     const { error } = await supabase.from("properties").delete().in("id", Array.from(selected));
     if (error) {
-      alert(`Couldn't delete selected properties: ${error.message}`);
+      showToast(`Couldn't delete selected properties: ${error.message}`, "error");
       return;
     }
+    showToast(`${selected.size} propert${selected.size === 1 ? "y" : "ies"} deleted`);
     loadProperties();
   }
 
@@ -70,6 +73,7 @@ export default function Dashboard({ profile }) {
 
   function handleSaved() {
     setModalOpen(false);
+    showToast(editing ? "Property updated" : "Property added");
     loadProperties();
   }
 

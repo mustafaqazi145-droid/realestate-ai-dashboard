@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import Login from "./pages/Login";
+import Overview from "./pages/Overview";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Viewings from "./pages/Viewings";
@@ -67,7 +68,8 @@ export default function App() {
         <Sidebar profile={profile} />
         <div className="main">
           <Routes>
-            <Route path="/" element={<Dashboard profile={profile} />} />
+            <Route path="/" element={<Overview profile={profile} />} />
+            <Route path="/properties" element={<Dashboard profile={profile} />} />
             <Route path="/leads" element={<Leads profile={profile} />} />
             <Route path="/viewings" element={<Viewings profile={profile} />} />
             <Route path="/import" element={<Import profile={profile} />} />

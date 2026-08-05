@@ -217,6 +217,34 @@
     .nav-links { display: none; }
     .hero-stats { gap: 24px; flex-wrap: wrap; }
   }
+  /* ---------- Type Filter Chips ---------- */
+  .type-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .type-chip {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: "Inter", sans-serif;
+    color: var(--ink);
+  }
+  .type-chip:hover {
+    border-color: var(--brass);
+    color: var(--brass-dark);
+  }
+  .type-chip.active {
+    background: var(--brass);
+    border-color: var(--brass);
+    color: #fff;
+  }
 </style>
 </head>
 <body>
@@ -283,7 +311,15 @@
         <h2>Browse listings</h2>
       </div>
     </div>
-
+    <div class="type-chips" id="type-chips">
+      <button class="type-chip active" data-type="" onclick="filterByType('')">All</button>
+      <button class="type-chip" data-type="house" onclick="filterByType('house')">House</button>
+      <button class="type-chip" data-type="apartment" onclick="filterByType('apartment')">Apartment</button>
+      <button class="type-chip" data-type="farmhouse" onclick="filterByType('farmhouse')">Farmhouse</button>
+      <button class="type-chip" data-type="plot" onclick="filterByType('plot')">Plot</button>
+      <button class="type-chip" data-type="land" onclick="filterByType('land')">Land</button>
+      <button class="type-chip" data-type="commercial" onclick="filterByType('commercial')">Commercial</button>
+    </div>
     <div class="filter-bar">
       <div class="filter-field">
         <label>City</label>
@@ -483,11 +519,24 @@
       loadListings({
         city: document.getElementById("f-city").value.trim(),
         area: document.getElementById("f-area").value.trim(),
-        propertyType: document.getElementById("f-type").value,
+      p_property_type: filters.propertyType || currentTypeFilter || null,
         purpose: document.getElementById("f-purpose").value,
         minPrice: document.getElementById("f-min-price").value,
         maxPrice: document.getElementById("f-max-price").value,
       });
+    }
+    let currentTypeFilter = "";
+
+    function filterByType(type) {
+      currentTypeFilter = type;
+      
+      // Update chip styles
+      document.querySelectorAll('.type-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.type === type);
+      });
+      
+      // Apply filter
+      applyFilters();
     }
 
     function clearFilters() {

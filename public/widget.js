@@ -97,6 +97,10 @@
       font-size: 10px; background: #f0efe9; color: #555; padding: 3px 7px; border-radius: 10px;
       text-transform: capitalize;
     }
+    .aiw-related-heading {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #6b7280; margin: 14px 0 6px; padding-top: 8px; border-top: 1px dashed #d9d8d0;
+    }
     .aiw-input-row { display: flex; padding: 12px; border-top: 1px solid #e5e4de; background: #fff; gap: 8px; }
     .aiw-input-row input { flex: 1; border: 1px solid #e5e4de; border-radius: 20px; padding: 9px 14px; font-size: 13px; }
     .aiw-input-row button {
@@ -350,6 +354,12 @@
 
       addAssistantMessage(data.reply || "Could you tell me a bit more about what you're looking for?");
       if (data.properties && data.properties.length > 0) {
+        if (data.matchType === "related") {
+          const heading = document.createElement("div");
+          heading.className = "aiw-related-heading";
+          heading.textContent = "Related Alternatives";
+          messagesEl.appendChild(heading);
+        }
         addPropertyCards(data.properties);
         lastMatchedProperty = data.properties[0];
       }

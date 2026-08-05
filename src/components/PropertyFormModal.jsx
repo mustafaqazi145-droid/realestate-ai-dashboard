@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+
+const PROPERTY_TYPES = ["house", "apartment", "farmhouse", "plot", "land", "commercial", "other"];
+const NO_BED_BATH_TYPES = ["plot", "land", "commercial"];
+const SIZE_UNITS = ["marla", "kanal", "sqft", "sqm", "acre"];
 
 const emptyForm = {
   property_code: "",
@@ -22,18 +26,45 @@ const emptyForm = {
   images: [],
 };
 
+function formatPrice(value) {
+  const digits = String(value).replace(/[^0-9]/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString();
+}
+
 export default function PropertyFormModal({ orgId, existing, onClose, onSaved }) {
   const [form, setForm] = useState(
     existing
       ? { ...existing, features: (existing.features || []).join(", "), price: existing.price ?? "" }
       : emptyForm
   );
+  const [priceDisplay, setPriceDisplay] = useState(existing?.price ? formatPrice(existing.price) : "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Suggest a starting property code for brand-new listings (editable, not forced)
+  useEffect(() => {
+    if (!existing) {
+      supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", orgId)
+        .then(({ count }) => {
+          if (count != null) update("property_code", `LISTING-${String(count + 1).padStart(3, "0")}`);
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function handlePriceChange(e) {
+    const digits = e.target.value.replace(/[^0-9]/g, "");
+    setPriceDisplay(formatPrice(digits));
+    update("price", digits);
   }
 
   async function handleImageUpload(e) {
@@ -62,6 +93,8 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
     update("images", form.images.filter((i) => i !== url));
   }
 
+  const hideBedBath = NO_BED_BATH_TYPES.includes(form.property_type);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
@@ -78,8 +111,8 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
       purpose: form.purpose,
       price: form.price === "" ? null : Number(form.price),
       currency: form.currency,
-      bedrooms: form.bedrooms === "" ? null : Number(form.bedrooms),
-      bathrooms: form.bathrooms === "" ? null : Number(form.bathrooms),
+      bedrooms: hideBedBath || form.bedrooms === "" ? null : Number(form.bedrooms),
+      bathrooms: hideBedBath || form.bathrooms === "" ? null : Number(form.bathrooms),
       size: form.size === "" ? null : Number(form.size),
       size_unit: form.size_unit,
       status: form.status,
@@ -113,8 +146,11 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
         <form onSubmit={handleSubmit}>
           <div className="form-grid">
             <div>
-              <label>Property code</label>
+              <label>Property code <span style={{ color: "var(--rust)" }}>*</span></label>
               <input value={form.property_code} onChange={(e) => update("property_code", e.target.value)} required />
+              <div style={{ fontSize: 11, color: "var(--slate)", marginTop: 4 }}>
+                Suggested — feel free to edit (e.g. DHA-045)
+              </div>
             </div>
             <div>
               <label>Status</label>
@@ -129,7 +165,7 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
             </div>
 
             <div className="span-2">
-              <label>Title</label>
+              <label>Title <span style={{ color: "var(--rust)" }}>*</span></label>
               <input value={form.title} onChange={(e) => update("title", e.target.value)} required />
             </div>
 
@@ -148,8 +184,12 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
             </div>
 
             <div>
-              <label>Property type</label>
-              <input value={form.property_type} onChange={(e) => update("property_type", e.target.value)} />
+              <label>Property type <span style={{ color: "var(--rust)" }}>*</span></label>
+              <select value={form.property_type} onChange={(e) => update("property_type", e.target.value)}>
+                {PROPERTY_TYPES.map((t) => (
+                  <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label>Purpose</label>
@@ -160,22 +200,26 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
             </div>
 
             <div>
-              <label>Price</label>
-              <input type="number" value={form.price} onChange={(e) => update("price", e.target.value)} required />
+              <label>Price <span style={{ color: "var(--rust)" }}>*</span></label>
+              <input type="text" inputMode="numeric" value={priceDisplay} onChange={handlePriceChange} required placeholder="e.g. 45,000,000" />
             </div>
             <div>
               <label>Currency</label>
               <input value={form.currency} onChange={(e) => update("currency", e.target.value)} />
             </div>
 
-            <div>
-              <label>Bedrooms</label>
-              <input type="number" value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)} />
-            </div>
-            <div>
-              <label>Bathrooms</label>
-              <input type="number" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} />
-            </div>
+            {!hideBedBath && (
+              <>
+                <div>
+                  <label>Bedrooms</label>
+                  <input type="number" value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)} />
+                </div>
+                <div>
+                  <label>Bathrooms</label>
+                  <input type="number" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} />
+                </div>
+              </>
+            )}
 
             <div>
               <label>Size</label>
@@ -183,7 +227,11 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
             </div>
             <div>
               <label>Size unit</label>
-              <input value={form.size_unit} onChange={(e) => update("size_unit", e.target.value)} />
+              <select value={form.size_unit} onChange={(e) => update("size_unit", e.target.value)}>
+                {SIZE_UNITS.map((u) => (
+                  <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>
+                ))}
+              </select>
             </div>
 
             <div className="span-2">

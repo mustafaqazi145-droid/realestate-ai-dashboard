@@ -173,6 +173,43 @@
 
   .empty-note { color: var(--slate); font-size: 13px; padding: 40px 0; text-align: center; }
 
+  /* ---------- Compare ---------- */
+  .compare-check {
+    position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(255,255,255,0.92);
+    border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; gap: 5px;
+    font-size: 10px; color: var(--ink); font-family: "IBM Plex Mono", monospace;
+  }
+  .compare-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--ink); color: #fff;
+    padding: 14px 6vw; display: flex; justify-content: space-between; align-items: center;
+    z-index: 500; transform: translateY(100%); transition: transform 0.25s ease;
+  }
+  .compare-bar.visible { transform: translateY(0); }
+  .compare-bar .cb-text { font-size: 13px; }
+  .compare-bar .cb-actions { display: flex; gap: 10px; }
+  .compare-bar button { border: none; padding: 9px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 600; }
+  .cb-compare-btn { background: var(--brass); color: #fff; }
+  .cb-clear-btn { background: transparent; color: #cfcdc4; border: 1px solid #3a3c3f !important; }
+
+  .compare-overlay {
+    position: fixed; inset: 0; background: rgba(20,22,26,0.55); z-index: 1000;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .compare-modal {
+    background: #fff; border-radius: 10px; max-width: 900px; width: 100%; max-height: 85vh;
+    overflow: auto; padding: 24px;
+  }
+  .compare-modal h2 { font-size: 20px; margin-bottom: 16px; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .compare-table th, .compare-table td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+  .compare-table th { background: var(--stone); font-family: "IBM Plex Mono", monospace; font-size: 10px; text-transform: uppercase; color: var(--slate); }
+  .compare-table .row-label { font-weight: 600; background: var(--stone); font-size: 12px; }
+  .compare-close { margin-top: 16px; }
+  @media (max-width: 640px) {
+    .compare-bar { flex-direction: column; gap: 10px; align-items: stretch; text-align: center; }
+    .compare-table { font-size: 11px; }
+  }
+
   /* ---------- Footer ---------- */
   footer { padding: 28px 6vw; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 12px; color: var(--slate); }
 
@@ -295,6 +332,16 @@
     </div>
   </section>
 
+  <div class="compare-bar" id="compare-bar">
+    <div class="cb-text" id="compare-count">0 selected</div>
+    <div class="cb-actions">
+      <button class="cb-clear-btn" onclick="clearCompare()">Clear</button>
+      <button class="cb-compare-btn" onclick="showComparison()">Compare Now</button>
+    </div>
+  </div>
+
+  <div id="compare-overlay-container"></div>
+
   <footer>
     <span>Demo Realty — a live demo built on your own inventory</span>
     <span class="mono">Powered by verified property intelligence</span>
@@ -305,6 +352,91 @@
     const ORG_ID = "11111111-1111-1111-1111-111111111111";
     const SUPABASE_URL = "https://wduuigczfxotwuotafvl.supabase.co";
     const SUPABASE_ANON_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXVpZ2N6ZnhvdHd1b3RhZnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzY4MTAsImV4cCI6MjEwMDcxMjgxMH0.vr0aVliwvnNMSOG3u2gF859uClklUrRc1pBSm3ZgyQQ";
+
+    const propertyCache = {};
+    const compareSelected = new Set();
+    const MAX_COMPARE = 3;
+
+    function toggleCompare(id) {
+      if (compareSelected.has(id)) {
+        compareSelected.delete(id);
+      } else {
+        if (compareSelected.size >= MAX_COMPARE) {
+          alert(`You can compare up to ${MAX_COMPARE} properties at a time.`);
+          document.getElementById(`cmp-${id}`).checked = false;
+          return;
+        }
+        compareSelected.add(id);
+      }
+      updateCompareBar();
+    }
+
+    function renderCompareChecks() {
+      compareSelected.forEach((id) => {
+        const el = document.getElementById(`cmp-${id}`);
+        if (el) el.checked = true;
+      });
+    }
+
+    function updateCompareBar() {
+      const bar = document.getElementById("compare-bar");
+      const countEl = document.getElementById("compare-count");
+      if (compareSelected.size >= 2) {
+        bar.classList.add("visible");
+        countEl.textContent = `${compareSelected.size} selected`;
+      } else {
+        bar.classList.remove("visible");
+      }
+    }
+
+    function clearCompare() {
+      compareSelected.forEach((id) => {
+        const el = document.getElementById(`cmp-${id}`);
+        if (el) el.checked = false;
+      });
+      compareSelected.clear();
+      updateCompareBar();
+    }
+
+    function showComparison() {
+      const props = Array.from(compareSelected).map((id) => propertyCache[id]).filter(Boolean);
+      if (props.length < 2) return;
+
+      const rows = [
+        ["Price", props.map((p) => `${p.currency} ${Number(p.price).toLocaleString()}`)],
+        ["Status", props.map((p) => p.status)],
+        ["Location", props.map((p) => [p.area, p.city].filter(Boolean).join(", "))],
+        ["Bedrooms", props.map((p) => p.bedrooms ?? "—")],
+        ["Bathrooms", props.map((p) => p.bathrooms ?? "—")],
+        ["Size", props.map((p) => (p.size ? `${p.size} ${p.size_unit || ""}` : "—"))],
+        ["Type", props.map((p) => p.property_type || "—")],
+        ["Features", props.map((p) => (p.features && p.features.length ? p.features.join(", ") : "—"))],
+      ];
+
+      const container = document.getElementById("compare-overlay-container");
+      container.innerHTML = `
+        <div class="compare-overlay" onclick="closeComparison(event)">
+          <div class="compare-modal" onclick="event.stopPropagation()">
+            <h2>Comparing ${props.length} properties</h2>
+            <table class="compare-table">
+              <thead>
+                <tr><th></th>${props.map((p) => `<th>${p.property_code}<br/>${p.title}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${rows.map(([label, values]) => `
+                  <tr><td class="row-label">${label}</td>${values.map((v) => `<td>${v}</td>`).join("")}</tr>
+                `).join("")}
+              </tbody>
+            </table>
+            <button class="btn-clear compare-close" onclick="closeComparison()">Close</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeComparison(e) {
+      document.getElementById("compare-overlay-container").innerHTML = "";
+    }
 
     async function loadListings(filters = {}) {
       const grid = document.getElementById("listings-grid");
@@ -339,6 +471,8 @@
         }
 
         grid.innerHTML = properties.map((p, i) => renderCard(p, i)).join("");
+        properties.forEach((p) => { propertyCache[p.id] = p; });
+        renderCompareChecks();
       } catch (e) {
         grid.innerHTML = `<div class="empty-note">Couldn't load listings right now.</div>`;
         console.error(e);
@@ -370,7 +504,12 @@
       const photo = p.images && p.images.length ? `<img src="${p.images[0]}" alt="${p.title}" />` : "";
       return `
         <div class="plot-card" style="animation-delay: ${Math.min(i * 0.06, 0.4)}s">
-          <div class="plot-photo">${photo}<span class="status-pin">${p.status}</span></div>
+          <div class="plot-photo">
+            ${photo}<span class="status-pin">${p.status}</span>
+            <label class="compare-check">
+              <input type="checkbox" onchange="toggleCompare('${p.id}')" id="cmp-${p.id}" /> Compare
+            </label>
+          </div>
           <div class="plot-body">
             <div class="plot-code">${p.property_code}</div>
             <div class="plot-title">${p.title}</div>

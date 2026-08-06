@@ -203,6 +203,21 @@
   }
   .type-chip:hover { border-color: var(--brass); color: var(--brass-dark); }
   .type-chip.active { background: var(--brass); border-color: var(--brass); color: #fff; }
+
+  /* ---------- Favorite + Share ---------- */
+  .fav-btn {
+    position: absolute; top: 10px; left: 10px; z-index: 2; background: rgba(255,255,255,0.92);
+    border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fav-btn.active { color: var(--rust); }
+  .card-share-row { display: flex; gap: 6px; margin-top: 10px; }
+  .share-btn {
+    flex: 1; border: 1px solid var(--line); background: transparent; padding: 6px 0; border-radius: 4px;
+    font-size: 11px; cursor: pointer; color: var(--slate); font-family: "Inter", sans-serif;
+  }
+  .share-btn:hover { border-color: var(--brass); color: var(--brass-dark); }
+  .share-btn.whatsapp:hover { border-color: #2f6f4f; color: #2f6f4f; }
 </style>
 </head>
 <body>
@@ -278,6 +293,7 @@
       <button class="type-chip" data-type="plot" onclick="filterByType('plot')">Plot</button>
       <button class="type-chip" data-type="land" onclick="filterByType('land')">Land</button>
       <button class="type-chip" data-type="commercial" onclick="filterByType('commercial')">Commercial</button>
+      <button class="type-chip" id="fav-chip" onclick="showFavoritesOnly()">❤ My Favorites</button>
     </div>
 
     <div class="filter-bar">
@@ -354,6 +370,72 @@
     const compareSelected = new Set();
     const MAX_COMPARE = 3;
     let currentTypeFilter = "";
+    let showingFavoritesOnly = false;
+
+    const favorites = new Set(JSON.parse(localStorage.getItem("aiw_favorites") || "[]"));
+
+    function saveFavorites() {
+      localStorage.setItem("aiw_favorites", JSON.stringify(Array.from(favorites)));
+    }
+
+    function toggleFavorite(id) {
+      if (favorites.has(id)) {
+        favorites.delete(id);
+      } else {
+        favorites.add(id);
+      }
+      saveFavorites();
+      const btn = document.getElementById(`fav-${id}`);
+      if (btn) btn.classList.toggle("active", favorites.has(id));
+    }
+
+    function renderFavButtons() {
+      favorites.forEach((id) => {
+        const btn = document.getElementById(`fav-${id}`);
+        if (btn) btn.classList.add("active");
+      });
+    }
+
+    function showFavoritesOnly() {
+      showingFavoritesOnly = !showingFavoritesOnly;
+      document.getElementById("fav-chip").classList.toggle("active", showingFavoritesOnly);
+      const grid = document.getElementById("listings-grid");
+
+      if (!showingFavoritesOnly) {
+        loadListings();
+        return;
+      }
+
+      const favProps = Array.from(favorites).map((id) => propertyCache[id]).filter(Boolean);
+      if (favProps.length === 0) {
+        grid.innerHTML = `<div class="empty-note">No favorites saved yet — tap the heart on any listing to save it here.</div>`;
+        return;
+      }
+      grid.innerHTML = favProps.map((p, i) => renderCard(p, i)).join("");
+      renderFavButtons();
+      renderCompareChecks();
+    }
+
+    function shareWhatsApp(id) {
+      const p = propertyCache[id];
+      if (!p) return;
+      const text = `Hi, I'm interested in ${p.property_code} — ${p.title} (${p.currency} ${Number(p.price).toLocaleString()}). ${window.location.href.split("?")[0]}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    }
+
+    function copyLink(id) {
+      const p = propertyCache[id];
+      if (!p) return;
+      const text = `${p.title} (${p.property_code}) — ${p.currency} ${Number(p.price).toLocaleString()} — ${window.location.href.split("?")[0]}`;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(`copy-${id}`);
+        if (btn) {
+          const original = btn.textContent;
+          btn.textContent = "Copied!";
+          setTimeout(() => { btn.textContent = original; }, 1500);
+        }
+      });
+    }
 
     function toggleCompare(id) {
       if (compareSelected.has(id)) {
@@ -471,6 +553,7 @@
         grid.innerHTML = properties.map((p, i) => renderCard(p, i)).join("");
         properties.forEach((p) => { propertyCache[p.id] = p; });
         renderCompareChecks();
+        renderFavButtons();
       } catch (e) {
         grid.innerHTML = `<div class="empty-note">Couldn't load listings right now.</div>`;
         console.error(e);
@@ -515,10 +598,12 @@
 
     function renderCard(p, i = 0) {
       const photo = p.images && p.images.length ? `<img src="${p.images[0]}" alt="${p.title}" />` : "";
+      const isFav = favorites.has(p.id);
       return `
         <div class="plot-card" style="animation-delay: ${Math.min(i * 0.06, 0.4)}s">
           <div class="plot-photo">
             ${photo}<span class="status-pin">${p.status}</span>
+            <button class="fav-btn${isFav ? " active" : ""}" id="fav-${p.id}" onclick="toggleFavorite('${p.id}')">♥</button>
             <label class="compare-check">
               <input type="checkbox" onchange="toggleCompare('${p.id}')" id="cmp-${p.id}" /> Compare
             </label>
@@ -534,6 +619,10 @@
             </div>
             <div class="plot-price">
               <span><span class="cur mono">${p.currency}</span><span class="amount">${Number(p.price).toLocaleString()}</span></span>
+            </div>
+            <div class="card-share-row">
+              <button class="share-btn whatsapp" onclick="shareWhatsApp('${p.id}')">WhatsApp</button>
+              <button class="share-btn" id="copy-${p.id}" onclick="copyLink('${p.id}')">Copy Link</button>
             </div>
           </div>
         </div>

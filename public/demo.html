@@ -218,6 +218,24 @@
   }
   .share-btn:hover { border-color: var(--brass); color: var(--brass-dark); }
   .share-btn.whatsapp:hover { border-color: #2f6f4f; color: #2f6f4f; }
+
+  /* ---------- Photo slider ---------- */
+  .photo-slide {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none;
+  }
+  .photo-slide.active { display: block; }
+  .slide-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); background: rgba(20,22,26,0.5); color: #fff;
+    border: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-size: 14px;
+    z-index: 3; display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .slide-arrow.prev { left: 6px; }
+  .slide-arrow.next { right: 6px; }
+  .slide-nav {
+    position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; z-index: 3;
+  }
+  .slide-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.55); cursor: pointer; }
+  .slide-dot.active { background: #fff; }
 </style>
 </head>
 <body>
@@ -416,6 +434,29 @@
       renderCompareChecks();
     }
 
+    function setSlideIndex(id, idx) {
+      const container = document.getElementById(`photo-${id}`);
+      if (!container) return;
+      container.dataset.current = idx;
+      container.querySelectorAll(".photo-slide").forEach((img, i) => img.classList.toggle("active", i === idx));
+      container.querySelectorAll(".slide-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
+    }
+
+    function changeSlide(id, dir, e) {
+      e.stopPropagation();
+      const container = document.getElementById(`photo-${id}`);
+      if (!container) return;
+      const total = container.querySelectorAll(".photo-slide").length;
+      let current = parseInt(container.dataset.current || "0", 10);
+      current = (current + dir + total) % total;
+      setSlideIndex(id, current);
+    }
+
+    function goToSlide(id, idx, e) {
+      e.stopPropagation();
+      setSlideIndex(id, idx);
+    }
+
     function shareWhatsApp(id) {
       const p = propertyCache[id];
       if (!p) return;
@@ -597,12 +638,29 @@
     }
 
     function renderCard(p, i = 0) {
-      const photo = p.images && p.images.length ? `<img src="${p.images[0]}" alt="${p.title}" />` : "";
+      const images = p.images && p.images.length ? p.images : [];
       const isFav = favorites.has(p.id);
+
+      const photoContent = images.length > 0
+        ? images.map((url, idx) => `<img class="photo-slide${idx === 0 ? " active" : ""}" src="${url}" alt="${p.title}" />`).join("")
+        : "";
+
+      const sliderControls = images.length > 1
+        ? `
+          <button class="slide-arrow prev" onclick="changeSlide('${p.id}', -1, event)">‹</button>
+          <button class="slide-arrow next" onclick="changeSlide('${p.id}', 1, event)">›</button>
+          <div class="slide-nav">
+            ${images.map((_, idx) => `<span class="slide-dot${idx === 0 ? " active" : ""}" onclick="goToSlide('${p.id}', ${idx}, event)"></span>`).join("")}
+          </div>
+        `
+        : "";
+
       return `
         <div class="plot-card" style="animation-delay: ${Math.min(i * 0.06, 0.4)}s">
-          <div class="plot-photo">
-            ${photo}<span class="status-pin">${p.status}</span>
+          <div class="plot-photo" id="photo-${p.id}" data-current="0">
+            ${photoContent}
+            <span class="status-pin">${p.status}</span>
+            ${sliderControls}
             <button class="fav-btn${isFav ? " active" : ""}" id="fav-${p.id}" onclick="toggleFavorite('${p.id}')">♥</button>
             <label class="compare-check">
               <input type="checkbox" onchange="toggleCompare('${p.id}')" id="cmp-${p.id}" /> Compare
@@ -629,6 +687,38 @@
       `;
     }
 
+    async function loadBranding() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_get_org_branding`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ p_org_id: ORG_ID }),
+        });
+        const data = await res.json();
+        const branding = Array.isArray(data) ? data[0] : data;
+        if (!branding) return;
+
+        if (branding.name) {
+          document.title = `${branding.name} — Verified Property Intelligence`;
+          const logoEl = document.querySelector(".logo");
+          if (logoEl && !branding.logo_url) logoEl.textContent = branding.name;
+        }
+        if (branding.logo_url) {
+          const logoEl = document.querySelector(".logo");
+          if (logoEl) {
+            logoEl.innerHTML = `<img src="${branding.logo_url}" alt="${branding.name || "Logo"}" style="max-height:32px;max-width:180px;object-fit:contain;" />`;
+          }
+        }
+      } catch (e) {
+        console.error("[Branding] failed to load", e);
+      }
+    }
+
+    loadBranding();
     loadListings();
   </script>
 

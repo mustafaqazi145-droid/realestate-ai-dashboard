@@ -7,11 +7,13 @@ import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Viewings from "./pages/Viewings";
 import Import from "./pages/Import";
+import Settings from "./pages/Settings";
 import Sidebar from "./components/Sidebar";
 
 export default function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [org, setOrg] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,6 +45,19 @@ export default function App() {
       });
   }, [session]);
 
+  function loadOrg(orgId) {
+    supabase
+      .from("organizations")
+      .select("name, logo_url")
+      .eq("id", orgId)
+      .single()
+      .then(({ data }) => setOrg(data));
+  }
+
+  useEffect(() => {
+    if (profile?.org_id) loadOrg(profile.org_id);
+  }, [profile]);
+
   if (loading) return null;
 
   if (!session) return <Login />;
@@ -65,7 +80,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="app-shell">
-        <Sidebar profile={profile} />
+        <Sidebar profile={profile} org={org} />
         <div className="main">
           <Routes>
             <Route path="/" element={<Overview profile={profile} />} />
@@ -73,6 +88,7 @@ export default function App() {
             <Route path="/leads" element={<Leads profile={profile} />} />
             <Route path="/viewings" element={<Viewings profile={profile} />} />
             <Route path="/import" element={<Import profile={profile} />} />
+            <Route path="/settings" element={<Settings profile={profile} org={org} onSaved={() => loadOrg(profile.org_id)} />} />
           </Routes>
         </div>
       </div>

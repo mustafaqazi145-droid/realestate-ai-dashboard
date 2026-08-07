@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import StatusBadge from "../components/StatusBadge";
 import PropertyFormModal from "../components/PropertyFormModal";
+import ImageSlider from "../components/ImageSlider";
 import { showToast } from "../toast";
 
 export default function Dashboard({ profile }) {
@@ -121,7 +122,7 @@ export default function Dashboard({ profile }) {
                     onChange={() => toggleOne(p.id)}
                     style={{ position: "absolute", top: 8, left: 8, width: 16, height: 16, zIndex: 2 }}
                   />
-                  {p.images?.[0] ? <img src={p.images[0]} alt={p.title} /> : "No photo"}
+                  {p.images?.[0] ? <ImageSlider images={p.images} alt={p.title} /> : "No photo"}
                 </div>
                 <div className="body">
                   <div className="code">{p.property_code}</div>

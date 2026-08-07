@@ -221,7 +221,8 @@
 
   /* ---------- Photo slider ---------- */
   .photo-slide {
-    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none;
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none;
+    background: var(--stone);
   }
   .photo-slide.active { display: block; }
   .slide-arrow {
@@ -432,6 +433,27 @@
       grid.innerHTML = favProps.map((p, i) => renderCard(p, i)).join("");
       renderFavButtons();
       renderCompareChecks();
+    }
+
+    const autoplayTimers = {};
+
+    function startAutoplay(id) {
+      const container = document.getElementById(`photo-${id}`);
+      if (!container) return;
+      const total = container.querySelectorAll(".photo-slide").length;
+      if (total <= 1) return;
+      stopAutoplay(id);
+      autoplayTimers[id] = setInterval(() => {
+        const current = parseInt(container.dataset.current || "0", 10);
+        setSlideIndex(id, (current + 1) % total);
+      }, 1100);
+    }
+
+    function stopAutoplay(id) {
+      if (autoplayTimers[id]) {
+        clearInterval(autoplayTimers[id]);
+        delete autoplayTimers[id];
+      }
     }
 
     function setSlideIndex(id, idx) {
@@ -657,7 +679,8 @@
 
       return `
         <div class="plot-card" style="animation-delay: ${Math.min(i * 0.06, 0.4)}s">
-          <div class="plot-photo" id="photo-${p.id}" data-current="0">
+          <div class="plot-photo" id="photo-${p.id}" data-current="0"
+               onmouseenter="startAutoplay('${p.id}')" onmouseleave="stopAutoplay('${p.id}')">
             ${photoContent}
             <span class="status-pin">${p.status}</span>
             ${sliderControls}

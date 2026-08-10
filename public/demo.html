@@ -37,8 +37,9 @@
     display: flex; justify-content: space-between; align-items: center;
     padding: 22px 6vw; position: relative; z-index: 10;
   }
-  .logo { font-family: "Fraunces", serif; font-size: 19px; }
-  .logo-sub { font-family: "IBM Plex Mono", monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass-dark); }
+  .logo { font-family: "Fraunces", serif; font-size: 19px; opacity: 0; transition: opacity 0.2s ease; }
+  .logo-sub { font-family: "IBM Plex Mono", monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass-dark); opacity: 0; transition: opacity 0.2s ease; }
+  .logo.ready, .logo-sub.ready { opacity: 1; }
   .nav-links { display: flex; gap: 28px; font-size: 13px; color: var(--slate); }
   .nav-links a { color: inherit; text-decoration: none; }
 
@@ -725,6 +726,8 @@
     }
 
     async function loadBranding() {
+      const logoEl = document.querySelector(".logo");
+      const logoSubEl = document.querySelector(".logo-sub");
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_get_org_branding`, {
           method: "POST",
@@ -737,21 +740,19 @@
         });
         const data = await res.json();
         const branding = Array.isArray(data) ? data[0] : data;
-        if (!branding) return;
 
-        if (branding.name) {
+        if (branding?.name) {
           document.title = `${branding.name} — Verified Property Intelligence`;
-          const logoEl = document.querySelector(".logo");
           if (logoEl && !branding.logo_url) logoEl.textContent = branding.name;
         }
-        if (branding.logo_url) {
-          const logoEl = document.querySelector(".logo");
-          if (logoEl) {
-            logoEl.innerHTML = `<img src="${branding.logo_url}" alt="${branding.name || "Logo"}" style="max-height:32px;max-width:180px;object-fit:contain;" />`;
-          }
+        if (branding?.logo_url && logoEl) {
+          logoEl.innerHTML = `<img src="${branding.logo_url}" alt="${branding.name || "Logo"}" style="max-height:32px;max-width:180px;object-fit:contain;" />`;
         }
       } catch (e) {
         console.error("[Branding] failed to load", e);
+      } finally {
+        if (logoEl) logoEl.classList.add("ready");
+        if (logoSubEl) logoSubEl.classList.add("ready");
       }
     }
 

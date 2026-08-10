@@ -27,7 +27,7 @@ export default function Settings({ profile, org, onSaved }) {
     setSaving(true);
     const { error } = await supabase
       .from("organizations")
-      .update({ name, logo_url: logoUrl })
+      .update({ name, logo_url: logoUrl || null })
       .eq("id", profile.org_id);
     setSaving(false);
     if (error) {
@@ -54,7 +54,17 @@ export default function Settings({ profile, org, onSaved }) {
         <label>Logo</label>
         <div style={{ marginBottom: 8 }}>
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo preview" style={{ maxHeight: 60, maxWidth: 220, objectFit: "contain", marginBottom: 10, display: "block" }} />
+            <>
+              <img src={logoUrl} alt="Logo preview" style={{ maxHeight: 60, maxWidth: 220, objectFit: "contain", marginBottom: 10, display: "block" }} />
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ border: "none", color: "var(--rust)", cursor: "pointer", background: "none", fontSize: 12, padding: 0, marginBottom: 10 }}
+                onClick={() => setLogoUrl("")}
+              >
+                Remove logo
+              </button>
+            </>
           ) : (
             <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 10 }}>No logo uploaded yet</div>
           )}

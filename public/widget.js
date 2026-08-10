@@ -42,6 +42,25 @@
   let messageCount = 0;
   let leadCaptured = false;
 
+  // ---- security: escape any dynamic text before it goes into innerHTML ----
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  // ---- phone validation: full 11-digit local format, or + country code format ----
+  function isValidPhone(phone) {
+    const cleaned = phone.replace(/[\s\-()]/g, "");
+    if (/^\+\d{8,15}$/.test(cleaned)) return true; // e.g. +923001234567
+    if (/^0\d{10}$/.test(cleaned)) return true; // e.g. 03001234567 (11 digits)
+    return false;
+  }
+
   // ---------------- styles ----------------
   const style = document.createElement("style");
   style.textContent = `
@@ -109,9 +128,11 @@
     .aiw-typing { font-size: 12px; color: #9c9a92; padding: 4px 0; }
     .aiw-lead-form { background: #fff; border: 1px solid #e5e4de; border-radius: 10px; padding: 14px; margin: 8px 0; }
     .aiw-lead-form input { width: 100%; margin-bottom: 8px; padding: 8px 10px; border: 1px solid #e5e4de; border-radius: 6px; font-size: 12px; box-sizing: border-box; }
+    .aiw-lead-form input.aiw-invalid { border-color: #a6402f; }
     .aiw-lead-form button { width: 100%; background: ${CONFIG.accent}; color: #fff; border: none; padding: 9px; border-radius: 6px; cursor: pointer; font-size: 13px; }
     .aiw-lead-form .aiw-label { font-size: 11px; color: #6b7280; margin-bottom: 10px; }
     .aiw-mini-label { display: block; font-size: 10px; color: #6b7280; margin: 8px 0 4px; }
+    .aiw-field-error { font-size: 10px; color: #a6402f; margin: -6px 0 8px; }
   `;
   document.head.appendChild(style);
 
@@ -126,7 +147,7 @@
   panel.innerHTML = `
     <div class="aiw-header">
       <div>
-        <div class="aiw-header-title">${CONFIG.agentName}</div>
+        <div class="aiw-header-title">${escapeHtml(CONFIG.agentName)}</div>
         <div class="aiw-header-sub">Usually replies instantly</div>
       </div>
       <button class="aiw-close">&times;</button>
@@ -185,35 +206,35 @@
       const specs = [];
       if (p.bedrooms) specs.push(`${p.bedrooms} bed`);
       if (p.bathrooms) specs.push(`${p.bathrooms} bath`);
-      if (p.size) specs.push(`${p.size} ${p.size_unit || ""}`.trim());
+      if (p.size) specs.push(`${escapeHtml(p.size)} ${escapeHtml(p.size_unit || "")}`.trim());
       const specsLine = specs.length ? `<div class="aiw-specs">${specs.join(" &middot; ")}</div>` : "";
 
       const featuresLine =
         p.features && p.features.length
           ? `<div class="aiw-features">${p.features
-              .map((f) => `<span class="aiw-tag">${f}</span>`)
+              .map((f) => `<span class="aiw-tag">${escapeHtml(f)}</span>`)
               .join("")}</div>`
           : "";
 
       const descLine = p.description
-        ? `<div class="aiw-desc">${p.description}</div>`
+        ? `<div class="aiw-desc">${escapeHtml(p.description)}</div>`
         : "";
 
       const photo = p.images && p.images.length
-        ? `<img class="aiw-prop-photo" src="${p.images[0]}" alt="${p.title}" />`
+        ? `<img class="aiw-prop-photo" src="${escapeHtml(p.images[0])}" alt="${escapeHtml(p.title)}" />`
         : "";
 
       card.innerHTML = `
         ${photo}
-        <span class="status">${p.status}</span>
-        <div class="code">${p.property_code}</div>
-        <div class="title">${p.title}</div>
-        <div>${[p.area, p.city].filter(Boolean).join(", ")}</div>
+        <span class="status">${escapeHtml(p.status)}</span>
+        <div class="code">${escapeHtml(p.property_code)}</div>
+        <div class="title">${escapeHtml(p.title)}</div>
+        <div>${escapeHtml([p.area, p.city].filter(Boolean).join(", "))}</div>
         ${specsLine}
         ${descLine}
         ${featuresLine}
-        <div class="price">${p.currency} ${Number(p.price).toLocaleString()}</div>
-        <button data-id="${p.id}" data-code="${p.property_code}">Request a viewing</button>
+        <div class="price">${escapeHtml(p.currency)} ${Number(p.price).toLocaleString()}</div>
+        <button data-id="${escapeHtml(p.id)}" data-code="${escapeHtml(p.property_code)}">Request a viewing</button>
       `;
       card.querySelector("button").addEventListener("click", () => {
         lastMatchedProperty = p;
@@ -229,8 +250,8 @@
   function showLeadForm() {
     const form = document.createElement("div");
     form.className = "aiw-lead-form";
-    const knownName = lastLeadInfo?.name || "";
-    const knownPhone = lastLeadInfo?.phone || "";
+    const knownName = escapeHtml(lastLeadInfo?.name || "");
+    const knownPhone = escapeHtml(lastLeadInfo?.phone || "");
     form.innerHTML = `
       <div class="aiw-label">${
         lastLeadInfo
@@ -238,7 +259,10 @@
           : "Share your details and a consultant will reach out:"
       }</div>
       <input type="text" placeholder="Your name" id="aiw-lead-name" value="${knownName}" />
-      <input type="text" placeholder="Phone number" id="aiw-lead-phone" value="${knownPhone}" />
+      <input type="tel" placeholder="Phone number (e.g. 03001234567)" id="aiw-lead-phone" value="${knownPhone}" />
+      <div class="aiw-field-error" id="aiw-phone-error" style="display:none;">
+        Enter a valid phone number — 11 digits (e.g. 03001234567) or with country code (e.g. +923001234567).
+      </div>
       <label class="aiw-mini-label">How soon are you looking to move forward?</label>
       <select id="aiw-lead-timeline">
         <option value="">Select one</option>
@@ -250,15 +274,28 @@
       <input type="datetime-local" id="aiw-lead-viewing-time" />
       <button id="aiw-lead-submit">Request contact</button>
     `;
+
+    const phoneInput = form.querySelector("#aiw-lead-phone");
+    const phoneError = form.querySelector("#aiw-phone-error");
+
+    phoneInput.addEventListener("input", () => {
+      phoneInput.classList.remove("aiw-invalid");
+      phoneError.style.display = "none";
+    });
+
     form.querySelector("#aiw-lead-submit").addEventListener("click", async () => {
       const name = form.querySelector("#aiw-lead-name").value.trim();
-      const phone = form.querySelector("#aiw-lead-phone").value.trim();
+      const phone = phoneInput.value.trim();
       const timeline = form.querySelector("#aiw-lead-timeline").value;
       const viewingTime = form.querySelector("#aiw-lead-viewing-time").value;
-      if (!phone) {
-        alert("Please add a phone number so we can reach you.");
+
+      if (!phone || !isValidPhone(phone)) {
+        phoneInput.classList.add("aiw-invalid");
+        phoneError.style.display = "block";
+        phoneInput.focus();
         return;
       }
+
       const leadId = await submitLead({ name, phone, timeline });
       if (leadId && viewingTime && lastMatchedProperty) {
         await requestViewing(leadId, lastMatchedProperty.id, viewingTime);
@@ -347,7 +384,11 @@
       typing.remove();
 
       if (data.error) {
-        addAssistantMessage("Sorry, something went wrong on our end. Please try again in a moment.");
+        if (data.error === "rate_limited") {
+          addAssistantMessage("You're sending messages a bit fast — please wait a few seconds and try again.");
+        } else {
+          addAssistantMessage("Sorry, something went wrong on our end. Please try again in a moment.");
+        }
         console.error("[AI Widget] backend error:", data);
         return;
       }

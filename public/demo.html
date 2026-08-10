@@ -129,8 +129,10 @@
   }
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   .plot-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(20,22,26,0.08); }
-  .plot-photo { height: 170px; background: linear-gradient(135deg, #e3e1d7, #f3f2ec); position: relative; overflow: hidden; }
-  .plot-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .plot-photo { height: 170px; background: linear-gradient(135deg, #e3e1d7, #f3f2ec); position: relative; overflow: hidden; transition: overflow 0.2s; }
+  .plot-photo:hover { overflow: visible; }
+  .plot-card { position: relative; }
+  .plot-card:hover { z-index: 40; }
   .plot-photo .status-pin {
     position: absolute; top: 10px; left: 10px; font-family: "IBM Plex Mono", monospace; font-size: 9px;
     text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px; border-radius: 3px; background: rgba(255,255,255,0.92);
@@ -222,21 +224,33 @@
   /* ---------- Photo slider ---------- */
   .photo-slide {
     position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none;
-    background: var(--stone);
+    background: var(--stone); transition: transform 0.25s ease, box-shadow 0.25s ease; transform-origin: center center;
+  }
+  .plot-photo:hover .photo-slide.active {
+    transform: scale(1.7);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    border-radius: 6px;
+    z-index: 10;
   }
   .photo-slide.active { display: block; }
   .slide-arrow {
-    position: absolute; top: 50%; transform: translateY(-50%); background: rgba(20,22,26,0.5); color: #fff;
-    border: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-size: 14px;
-    z-index: 3; display: flex; align-items: center; justify-content: center; line-height: 1;
+    position: absolute; top: 50%; transform: translateY(-50%); background: #fff; color: var(--ink);
+    border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 17px;
+    z-index: 12; display: flex; align-items: center; justify-content: center; line-height: 1;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25); opacity: 0; transition: opacity 0.2s ease, transform 0.15s ease;
   }
-  .slide-arrow.prev { left: 6px; }
-  .slide-arrow.next { right: 6px; }
+  .plot-photo:hover .slide-arrow { opacity: 1; }
+  .slide-arrow:hover { transform: translateY(-50%) scale(1.12); color: var(--brass-dark); }
+  .slide-arrow.prev { left: 10px; }
+  .slide-arrow.next { right: 10px; }
   .slide-nav {
-    position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; z-index: 3;
+    position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; z-index: 12;
   }
-  .slide-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.55); cursor: pointer; }
-  .slide-dot.active { background: #fff; }
+  .slide-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.6); cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .slide-dot.active { background: #fff; transform: scale(1.4); }
 </style>
 </head>
 <body>
@@ -446,7 +460,7 @@
       autoplayTimers[id] = setInterval(() => {
         const current = parseInt(container.dataset.current || "0", 10);
         setSlideIndex(id, (current + 1) % total);
-      }, 1100);
+      }, 3000);
     }
 
     function stopAutoplay(id) {

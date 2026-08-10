@@ -20,7 +20,7 @@ export default function ImageSlider({ images = [], alt = "" }) {
     if (images.length <= 1 || timerRef.current) return;
     timerRef.current = setInterval(() => {
       setIndex((i) => (i + 1) % images.length);
-    }, 1100);
+    }, 3000);
   }
 
   function stopAutoplay() {

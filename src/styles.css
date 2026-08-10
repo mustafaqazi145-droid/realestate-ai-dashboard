@@ -172,7 +172,9 @@ h1, h2, h3, .display {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
+.property-card:hover { overflow: visible; z-index: 40; }
 
 .property-card .thumb {
   height: 140px;
@@ -184,20 +186,38 @@ h1, h2, h3, .display {
   font-size: 11px;
   font-family: "IBM Plex Mono", monospace;
   overflow: hidden;
+  position: relative;
 }
-.property-card .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--stone); }
+.property-card .thumb:hover { overflow: visible; }
+.property-card .thumb img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--stone);
+  transition: transform 0.25s ease, box-shadow 0.25s ease; transform-origin: center center;
+}
+.property-card .thumb:hover img {
+  transform: scale(1.7);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+  border-radius: 6px;
+  z-index: 10;
+}
 .slide-arrow {
-  position: absolute; top: 50%; transform: translateY(-50%); background: rgba(20,22,26,0.5); color: #fff;
-  border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 13px;
-  z-index: 3; display: flex; align-items: center; justify-content: center; line-height: 1;
+  position: absolute; top: 50%; transform: translateY(-50%); background: #fff; color: var(--ink);
+  border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 15px;
+  z-index: 12; display: flex; align-items: center; justify-content: center; line-height: 1;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25); opacity: 0; transition: opacity 0.2s ease, transform 0.15s ease;
 }
-.slide-arrow.prev { left: 6px; }
-.slide-arrow.next { right: 6px; }
+.property-card .thumb:hover .slide-arrow { opacity: 1; }
+.slide-arrow:hover { transform: translateY(-50%) scale(1.12); color: var(--brass-dark); }
+.slide-arrow.prev { left: 8px; }
+.slide-arrow.next { right: 8px; }
 .slide-nav {
-  position: absolute; bottom: 6px; left: 0; right: 0; display: flex; justify-content: center; gap: 4px; z-index: 3;
+  position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 4px; z-index: 12;
 }
-.slide-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.55); cursor: pointer; }
-.slide-dot.active { background: #fff; }
+.slide-dot {
+  width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.6); cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.15s ease, background 0.15s ease;
+}
+.slide-dot.active { background: #fff; transform: scale(1.4); }
+
 
 .property-card .body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
 

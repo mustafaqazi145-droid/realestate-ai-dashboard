@@ -241,7 +241,7 @@
         ${featuresLine}
         <div class="price">${escapeHtml(p.currency)} ${Number(p.price).toLocaleString()}</div>
         <button data-id="${escapeHtml(p.id)}" data-code="${escapeHtml(p.property_code)}">Request a viewing</button>
-        <a class="aiw-view-link" href="${escapeHtml(CONFIG.listingPageUrl)}?property=${encodeURIComponent(p.property_code)}" target="_blank" rel="noopener">View full property details →</a>
+        <a class="aiw-view-link" href="${escapeHtml(CONFIG.listingPageUrl)}?property=${encodeURIComponent(p.property_code)}">View full property details →</a>
       `;
       card.querySelector("button").addEventListener("click", () => {
         lastMatchedProperty = p;

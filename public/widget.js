@@ -24,6 +24,7 @@
     functionUrl: scriptTag.getAttribute("data-function-url"),
     agentName: scriptTag.getAttribute("data-agent-name") || "Property Assistant",
     accent: scriptTag.getAttribute("data-accent") || "#b8863b",
+    listingPageUrl: scriptTag.getAttribute("data-listing-page-url") || "demo.html",
   };
 
   if (!CONFIG.orgId || !CONFIG.functionUrl) {
@@ -108,6 +109,11 @@
       margin-top: 8px; width: 100%; padding: 7px; font-size: 12px; border-radius: 6px;
       border: 1px solid ${CONFIG.accent}; background: transparent; color: ${CONFIG.accent}; cursor: pointer;
     }
+    .aiw-view-link {
+      display: block; text-align: center; margin-top: 8px; font-size: 11px; color: #6b7280;
+      text-decoration: none; border: 1px solid #e5e4de; border-radius: 6px; padding: 6px 0;
+    }
+    .aiw-view-link:hover { border-color: ${CONFIG.accent}; color: ${CONFIG.accent}; }
     .aiw-prop-photo { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
     .aiw-specs { font-size: 11px; color: #6b7280; margin: 4px 0; }
     .aiw-desc { font-size: 12px; color: #444; margin: 6px 0; line-height: 1.4; }
@@ -235,6 +241,7 @@
         ${featuresLine}
         <div class="price">${escapeHtml(p.currency)} ${Number(p.price).toLocaleString()}</div>
         <button data-id="${escapeHtml(p.id)}" data-code="${escapeHtml(p.property_code)}">Request a viewing</button>
+        <a class="aiw-view-link" href="${escapeHtml(CONFIG.listingPageUrl)}?property=${encodeURIComponent(p.property_code)}" target="_blank" rel="noopener">View full property details →</a>
       `;
       card.querySelector("button").addEventListener("click", () => {
         lastMatchedProperty = p;

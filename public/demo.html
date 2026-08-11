@@ -252,6 +252,21 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.15s ease, background 0.15s ease;
   }
   .slide-dot.active { background: #fff; transform: scale(1.4); }
+
+  /* ---------- Direct link highlight ---------- */
+  .plot-card.highlighted {
+    outline: 3px solid var(--brass); outline-offset: 2px;
+    animation: highlightPulse 1.6s ease-in-out 2;
+  }
+  @keyframes highlightPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(184,134,59,0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(184,134,59,0); }
+  }
+  .back-to-all {
+    display: inline-block; margin-bottom: 16px; font-size: 12px; color: var(--brass-dark);
+    text-decoration: none; border: 1px solid var(--line); padding: 7px 14px; border-radius: 20px;
+  }
+  .back-to-all:hover { border-color: var(--brass); }
 </style>
 </head>
 <body>
@@ -318,6 +333,8 @@
         <h2>Browse listings</h2>
       </div>
     </div>
+
+    <div id="direct-link-banner" style="display:none; margin-bottom: 16px;"></div>
 
     <div class="type-chips" id="type-chips">
       <button class="type-chip active" data-type="" onclick="filterByType('')">All</button>
@@ -626,6 +643,7 @@
             p_purpose: filters.purpose || null,
             p_min_price: filters.minPrice || null,
             p_max_price: filters.maxPrice || null,
+            p_keyword: filters.keyword || null,
             p_limit: 24,
           }),
         });
@@ -768,8 +786,40 @@
       }
     }
 
+    async function handleDirectLink() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("property");
+      if (!code) {
+        loadListings();
+        return;
+      }
+
+      await loadListings({ keyword: code });
+
+      const banner = document.getElementById("direct-link-banner");
+      banner.style.display = "block";
+      banner.innerHTML = `<a href="#" class="back-to-all" onclick="showAllListings(event)">← Back to all listings</a>`;
+
+      const match = Object.values(propertyCache).find((p) => p.property_code === code);
+      if (match) {
+        const photoEl = document.getElementById(`photo-${match.id}`);
+        const card = photoEl ? photoEl.closest(".plot-card") : null;
+        if (card) {
+          card.classList.add("highlighted");
+          setTimeout(() => card.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+        }
+      }
+    }
+
+    function showAllListings(e) {
+      e.preventDefault();
+      document.getElementById("direct-link-banner").style.display = "none";
+      window.history.replaceState({}, "", window.location.pathname);
+      loadListings();
+    }
+
     loadBranding();
-    loadListings();
+    handleDirectLink();
   </script>
 
   <!-- AI Chat Widget -->

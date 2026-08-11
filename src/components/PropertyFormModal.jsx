@@ -4,6 +4,8 @@ import { supabase } from "../supabaseClient";
 const PROPERTY_TYPES = ["house", "apartment", "farmhouse", "plot", "land", "commercial", "other"];
 const NO_BED_BATH_TYPES = ["plot", "land", "commercial"];
 const SIZE_UNITS = ["marla", "kanal", "sqft", "sqm", "acre"];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB per image
+const MAX_IMAGES = 12;
 
 const emptyForm = {
   property_code: "",
@@ -70,15 +72,50 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
   async function handleImageUpload(e) {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    setUploading(true);
     setError("");
+
+    const currentCount = (form.images || []).length;
+    if (currentCount >= MAX_IMAGES) {
+      setError(`This property already has the maximum of ${MAX_IMAGES} images.`);
+      e.target.value = "";
+      return;
+    }
+
+    // --- Security: validate every file before uploading anything ---
+    const accepted = [];
+    const rejected = [];
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) {
+        rejected.push(`${file.name} — not an image file`);
+        continue;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        rejected.push(`${file.name} — too large (max 5MB)`);
+        continue;
+      }
+      if (accepted.length + currentCount >= MAX_IMAGES) {
+        rejected.push(`${file.name} — skipped, ${MAX_IMAGES}-image limit reached`);
+        continue;
+      }
+      accepted.push(file);
+    }
+
+    if (rejected.length > 0) {
+      setError(`Skipped: ${rejected.join("; ")}`);
+    }
+    if (accepted.length === 0) {
+      e.target.value = "";
+      return;
+    }
+
+    setUploading(true);
     const uploadedUrls = [...(form.images || [])];
 
-    for (const file of files) {
+    for (const file of accepted) {
       const path = `${orgId}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage.from("property-images").upload(path, file);
       if (uploadError) {
-        setError(`Upload failed: ${uploadError.message}`);
+        setError((prev) => (prev ? `${prev}; ` : "") + `Upload failed for ${file.name}: ${uploadError.message}`);
         continue;
       }
       const { data } = supabase.storage.from("property-images").getPublicUrl(path);
@@ -87,6 +124,7 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
 
     update("images", uploadedUrls);
     setUploading(false);
+    e.target.value = "";
   }
 
   function removeImage(url) {
@@ -240,7 +278,7 @@ export default function PropertyFormModal({ orgId, existing, onClose, onSaved })
             </div>
 
             <div className="span-2">
-              <label>Images</label>
+              <label>Images (max {MAX_IMAGES}, 5MB each)</label>
               <input type="file" accept="image/*" multiple onChange={handleImageUpload} />
               {uploading && <div style={{ fontSize: 12, color: "var(--slate)", marginTop: 6 }}>Uploading…</div>}
               {form.images?.length > 0 && (

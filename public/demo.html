@@ -400,6 +400,17 @@
     const SUPABASE_URL = "https://wduuigczfxotwuotafvl.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXVpZ2N6ZnhvdHd1b3RhZnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzY4MTAsImV4cCI6MjEwMDcxMjgxMH0.vr0aVliwvnNMSOG3u2gF859uClklUrRc1pBSm3ZgyQQ";
 
+    // --- Security: escape any dynamic text before it goes into innerHTML ---
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
     const propertyCache = {};
     const compareSelected = new Set();
     const MAX_COMPARE = 3;
@@ -561,14 +572,14 @@
       if (props.length < 2) return;
 
       const rows = [
-        ["Price", props.map((p) => `${p.currency} ${Number(p.price).toLocaleString()}`)],
-        ["Status", props.map((p) => p.status)],
-        ["Location", props.map((p) => [p.area, p.city].filter(Boolean).join(", "))],
+        ["Price", props.map((p) => escapeHtml(`${p.currency} ${Number(p.price).toLocaleString()}`))],
+        ["Status", props.map((p) => escapeHtml(p.status))],
+        ["Location", props.map((p) => escapeHtml([p.area, p.city].filter(Boolean).join(", ")))],
         ["Bedrooms", props.map((p) => p.bedrooms ?? "—")],
         ["Bathrooms", props.map((p) => p.bathrooms ?? "—")],
-        ["Size", props.map((p) => (p.size ? `${p.size} ${p.size_unit || ""}` : "—"))],
-        ["Type", props.map((p) => p.property_type || "—")],
-        ["Features", props.map((p) => (p.features && p.features.length ? p.features.join(", ") : "—"))],
+        ["Size", props.map((p) => escapeHtml(p.size ? `${p.size} ${p.size_unit || ""}` : "—"))],
+        ["Type", props.map((p) => escapeHtml(p.property_type || "—"))],
+        ["Features", props.map((p) => escapeHtml(p.features && p.features.length ? p.features.join(", ") : "—"))],
       ];
 
       const container = document.getElementById("compare-overlay-container");
@@ -578,11 +589,11 @@
             <h2>Comparing ${props.length} properties</h2>
             <table class="compare-table">
               <thead>
-                <tr><th></th>${props.map((p) => `<th>${p.property_code}<br/>${p.title}</th>`).join("")}</tr>
+                <tr><th></th>${props.map((p) => `<th>${escapeHtml(p.property_code)}<br/>${escapeHtml(p.title)}</th>`).join("")}</tr>
               </thead>
               <tbody>
                 ${rows.map(([label, values]) => `
-                  <tr><td class="row-label">${label}</td>${values.map((v) => `<td>${v}</td>`).join("")}</tr>
+                  <tr><td class="row-label">${escapeHtml(label)}</td>${values.map((v) => `<td>${v}</td>`).join("")}</tr>
                 `).join("")}
               </tbody>
             </table>
@@ -677,9 +688,10 @@
     function renderCard(p, i = 0) {
       const images = p.images && p.images.length ? p.images : [];
       const isFav = favorites.has(p.id);
+      const safeTitle = escapeHtml(p.title);
 
       const photoContent = images.length > 0
-        ? images.map((url, idx) => `<img class="photo-slide${idx === 0 ? " active" : ""}" src="${url}" alt="${p.title}" />`).join("")
+        ? images.map((url, idx) => `<img class="photo-slide${idx === 0 ? " active" : ""}" src="${escapeHtml(url)}" alt="${safeTitle}" />`).join("")
         : "";
 
       const sliderControls = images.length > 1
@@ -697,7 +709,7 @@
           <div class="plot-photo" id="photo-${p.id}" data-current="0"
                onmouseenter="startAutoplay('${p.id}')" onmouseleave="stopAutoplay('${p.id}')">
             ${photoContent}
-            <span class="status-pin">${p.status}</span>
+            <span class="status-pin">${escapeHtml(p.status)}</span>
             ${sliderControls}
             <button class="fav-btn${isFav ? " active" : ""}" id="fav-${p.id}" onclick="toggleFavorite('${p.id}')">♥</button>
             <label class="compare-check">
@@ -705,16 +717,16 @@
             </label>
           </div>
           <div class="plot-body">
-            <div class="plot-code">${p.property_code}</div>
-            <div class="plot-title">${p.title}</div>
-            <div class="plot-loc">${[p.area, p.city].filter(Boolean).join(", ")}</div>
+            <div class="plot-code">${escapeHtml(p.property_code)}</div>
+            <div class="plot-title">${safeTitle}</div>
+            <div class="plot-loc">${escapeHtml([p.area, p.city].filter(Boolean).join(", "))}</div>
             <div class="plot-dims">
               <span>${p.bedrooms ?? "–"}<span class="dim-label">Beds</span></span>
               <span>${p.bathrooms ?? "–"}<span class="dim-label">Baths</span></span>
-              <span>${p.size ?? "–"} ${p.size_unit ?? ""}<span class="dim-label">Size</span></span>
+              <span>${p.size ?? "–"} ${escapeHtml(p.size_unit ?? "")}<span class="dim-label">Size</span></span>
             </div>
             <div class="plot-price">
-              <span><span class="cur mono">${p.currency}</span><span class="amount">${Number(p.price).toLocaleString()}</span></span>
+              <span><span class="cur mono">${escapeHtml(p.currency)}</span><span class="amount">${Number(p.price).toLocaleString()}</span></span>
             </div>
             <div class="card-share-row">
               <button class="share-btn whatsapp" onclick="shareWhatsApp('${p.id}')">WhatsApp</button>
@@ -746,7 +758,7 @@
           if (logoEl && !branding.logo_url) logoEl.textContent = branding.name;
         }
         if (branding?.logo_url && logoEl) {
-          logoEl.innerHTML = `<img src="${branding.logo_url}" alt="${branding.name || "Logo"}" style="max-height:32px;max-width:180px;object-fit:contain;" />`;
+          logoEl.innerHTML = `<img src="${escapeHtml(branding.logo_url)}" alt="${escapeHtml(branding.name || "Logo")}" style="max-height:32px;max-width:180px;object-fit:contain;" />`;
         }
       } catch (e) {
         console.error("[Branding] failed to load", e);

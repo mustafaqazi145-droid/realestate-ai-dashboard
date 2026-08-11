@@ -2,6 +2,8 @@ import { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { showToast } from "../toast";
 
+const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB — logos should always be small
+
 export default function Settings({ profile, org, onSaved }) {
   const [name, setName] = useState(org?.name || "");
   const [logoUrl, setLogoUrl] = useState(org?.logo_url || "");
@@ -11,10 +13,24 @@ export default function Settings({ profile, org, onSaved }) {
   async function handleLogoUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // --- Security: validate before uploading ---
+    if (!file.type.startsWith("image/")) {
+      showToast("Please choose an image file for the logo.", "error");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_LOGO_SIZE) {
+      showToast(`Logo is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max is 2MB.`, "error");
+      e.target.value = "";
+      return;
+    }
+
     setUploading(true);
     const path = `${profile.org_id}/logo-${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("org-logos").upload(path, file);
     setUploading(false);
+    e.target.value = "";
     if (error) {
       showToast(`Logo upload failed: ${error.message}`, "error");
       return;
@@ -51,7 +67,7 @@ export default function Settings({ profile, org, onSaved }) {
         <label>Agency / Business name</label>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Demo Realty" style={{ marginBottom: 18 }} />
 
-        <label>Logo</label>
+        <label>Logo (max 2MB)</label>
         <div style={{ marginBottom: 8 }}>
           {logoUrl ? (
             <>

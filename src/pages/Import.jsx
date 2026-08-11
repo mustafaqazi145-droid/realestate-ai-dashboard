@@ -8,6 +8,8 @@ const TEMPLATE_HEADERS = [
   "status", "features", "is_featured", "is_premium", "images",
 ];
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB — a CSV of listings should never legitimately be bigger
+
 function downloadTemplate() {
   const sample = [
     TEMPLATE_HEADERS.join(","),
@@ -83,8 +85,24 @@ export default function Import({ profile }) {
   function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // --- Security: validate before ever reading file contents ---
+    const nameLower = file.name.toLowerCase();
+    const looksLikeCsv = nameLower.endsWith(".csv") || file.type === "text/csv" || file.type === "";
+    if (!looksLikeCsv) {
+      setStatus(`"${file.name}" doesn't look like a CSV file. Please select a .csv file.`);
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setStatus(`That file is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max allowed is 5MB.`);
+      e.target.value = "";
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (evt) => parseCsvText(evt.target.result);
+    reader.onerror = () => setStatus("Couldn't read that file — please try again.");
     reader.readAsText(file);
   }
 
@@ -95,6 +113,10 @@ export default function Import({ profile }) {
       const res = await fetch(sheetUrl);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
+      if (text.length > MAX_FILE_SIZE) {
+        setStatus("That sheet is too large to import directly — please download it as CSV and upload the file instead.");
+        return;
+      }
       parseCsvText(text);
     } catch (e) {
       setStatus(
@@ -159,7 +181,7 @@ export default function Import({ profile }) {
       </div>
 
       <div style={{ marginBottom: 20 }}>
-        <label>Or upload a CSV file directly</label>
+        <label>Or upload a CSV file directly (max 5MB)</label>
         <input type="file" accept=".csv,text/csv" onChange={handleFile} />
       </div>
 

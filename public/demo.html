@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>My Agency-Verified Property Intelligence</title>
+<title>Demo Realty — Verified Property Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
@@ -267,13 +267,34 @@
     text-decoration: none; border: 1px solid var(--line); padding: 7px 14px; border-radius: 20px;
   }
   .back-to-all:hover { border-color: var(--brass); }
+
+  /* ---------- Pre-WhatsApp lead capture ---------- */
+  .wa-lead-overlay {
+    position: fixed; inset: 0; background: rgba(20,22,26,0.55); z-index: 1100;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .wa-lead-modal { background: #fff; border-radius: 10px; max-width: 380px; width: 100%; padding: 24px; }
+  .wa-lead-modal h3 { font-size: 17px; margin-bottom: 6px; font-family: "Fraunces", serif; }
+  .wa-lead-modal p { font-size: 12px; color: var(--slate); margin-bottom: 16px; }
+  .wa-lead-modal input {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px;
+    font-size: 13px; margin-bottom: 6px; box-sizing: border-box; font-family: "Inter", sans-serif;
+  }
+  .wa-lead-modal input.invalid { border-color: var(--rust); }
+  .wa-field-error { font-size: 11px; color: var(--rust); margin-bottom: 10px; display: none; }
+  .wa-lead-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .wa-lead-actions button {
+    flex: 1; padding: 10px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-weight: 600;
+  }
+  .wa-continue-btn { background: #2f6f4f; color: #fff; }
+  .wa-cancel-btn { background: transparent; border: 1px solid var(--line) !important; color: var(--slate); }
 </style>
 </head>
 <body>
 
   <nav>
     <div>
-      <div class="logo">My Agency</div>
+      <div class="logo">Demo Realty</div>
       <div class="logo-sub">Verified Property Intelligence</div>
     </div>
     <div class="nav-links">
@@ -522,10 +543,78 @@
       setSlideIndex(id, idx);
     }
 
+    function isValidPhone(phone) {
+      const cleaned = phone.replace(/[\s\-()]/g, "");
+      if (/^\+\d{8,15}$/.test(cleaned)) return true;
+      if (/^0\d{10}$/.test(cleaned)) return true;
+      return false;
+    }
+
     function shareWhatsApp(id) {
       const p = propertyCache[id];
       if (!p) return;
+
+      const container = document.getElementById("compare-overlay-container");
+      container.innerHTML = `
+        <div class="wa-lead-overlay" onclick="closeWaLeadForm(event)">
+          <div class="wa-lead-modal" onclick="event.stopPropagation()">
+            <h3>Before you go to WhatsApp</h3>
+            <p>Share your details so our consultant knows you're asking about ${escapeHtml(p.property_code)} — ${escapeHtml(p.title)}.</p>
+            <input type="text" id="wa-name" placeholder="Your name" />
+            <input type="tel" id="wa-phone" placeholder="Phone number (e.g. 03001234567)" />
+            <div class="wa-field-error" id="wa-phone-error">Enter a valid phone number — 11 digits (e.g. 03001234567) or with country code (e.g. +923001234567).</div>
+            <div class="wa-lead-actions">
+              <button class="wa-cancel-btn" onclick="closeWaLeadForm(event)">Cancel</button>
+              <button class="wa-continue-btn" onclick="submitWaLeadAndContinue('${id}')">Continue to WhatsApp</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeWaLeadForm(e) {
+      if (e) e.preventDefault();
+      document.getElementById("compare-overlay-container").innerHTML = "";
+    }
+
+    async function submitWaLeadAndContinue(id) {
+      const p = propertyCache[id];
+      if (!p) return;
+      const nameEl = document.getElementById("wa-name");
+      const phoneEl = document.getElementById("wa-phone");
+      const errorEl = document.getElementById("wa-phone-error");
+      const name = nameEl.value.trim();
+      const phone = phoneEl.value.trim();
+
+      if (!phone || !isValidPhone(phone)) {
+        phoneEl.classList.add("invalid");
+        errorEl.style.display = "block";
+        phoneEl.focus();
+        return;
+      }
+
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_submit_lead`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            p_org_id: ORG_ID,
+            p_name: name || null,
+            p_phone: phone,
+            p_property_interested_id: p.id,
+            p_conversation_summary: `Interested in ${p.property_code}, clicked WhatsApp from public listing page.`,
+          }),
+        });
+      } catch (e) {
+        console.error("[WhatsApp lead] submission failed", e);
+      }
+
       const text = `Hi, I'm interested in ${p.property_code} — ${p.title} (${p.currency} ${Number(p.price).toLocaleString()}). ${window.location.href.split("?")[0]}`;
+      closeWaLeadForm();
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
     }
 

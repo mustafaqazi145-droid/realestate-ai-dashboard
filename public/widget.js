@@ -402,10 +402,10 @@
 
       addAssistantMessage(data.reply || "Could you tell me a bit more about what you're looking for?");
       if (data.properties && data.properties.length > 0) {
-        if (data.matchType === "related") {
+        if (data.matchType === "related" || data.matchType === "fallback") {
           const heading = document.createElement("div");
           heading.className = "aiw-related-heading";
-          heading.textContent = "Related Alternatives";
+          heading.textContent = data.matchType === "fallback" ? "Other Available Properties" : "Related Alternatives";
           messagesEl.appendChild(heading);
         }
         addPropertyCards(data.properties);

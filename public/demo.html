@@ -130,7 +130,7 @@
   }
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   .plot-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(20,22,26,0.08); }
-  .plot-photo { height: 170px; background: linear-gradient(135deg, #e3e1d7, #f3f2ec); position: relative; overflow: hidden; transition: overflow 0.2s; }
+  .plot-photo { height: 230px; background: linear-gradient(135deg, #e3e1d7, #f3f2ec); position: relative; overflow: hidden; transition: overflow 0.2s; cursor: zoom-in; }
   .plot-photo:hover { overflow: visible; }
   .plot-card { position: relative; }
   .plot-card:hover { z-index: 40; }
@@ -288,6 +288,38 @@
   }
   .wa-continue-btn { background: #2f6f4f; color: #fff; }
   .wa-cancel-btn { background: transparent; border: 1px solid var(--line) !important; color: var(--slate); }
+
+  /* ---------- Full-screen lightbox (works on mobile too, unlike hover) ---------- */
+  .lightbox-overlay {
+    position: fixed; inset: 0; background: rgba(10,11,13,0.94); z-index: 2000;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .lightbox-img-wrap { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; min-height: 0; }
+  .lightbox-img { max-width: 92vw; max-height: 78vh; object-fit: contain; border-radius: 4px; }
+  .lightbox-close {
+    position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.12); color: #fff;
+    border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 22px; cursor: pointer; z-index: 2;
+  }
+  .lightbox-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.12); color: #fff;
+    border: none; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox-arrow:hover { background: rgba(255,255,255,0.25); }
+  .lightbox-arrow.prev { left: 16px; }
+  .lightbox-arrow.next { right: 16px; }
+  .lightbox-counter {
+    color: rgba(255,255,255,0.75); font-family: "IBM Plex Mono", monospace; font-size: 12px; padding-bottom: 18px;
+  }
+  .lightbox-thumbs { display: flex; gap: 6px; padding-bottom: 16px; overflow-x: auto; max-width: 90vw; }
+  .lightbox-thumb {
+    width: 48px; height: 36px; object-fit: cover; border-radius: 3px; cursor: pointer; opacity: 0.5; flex-shrink: 0;
+    border: 2px solid transparent;
+  }
+  .lightbox-thumb.active { opacity: 1; border-color: var(--brass); }
+  @media (max-width: 640px) {
+    .lightbox-arrow { width: 40px; height: 40px; font-size: 20px; }
+  }
 </style>
 </head>
 <body>
@@ -427,6 +459,7 @@
   </div>
 
   <div id="compare-overlay-container"></div>
+  <div id="lightbox-container"></div>
 
   <footer>
     <span>Demo Realty — a live demo built on your own inventory</span>
@@ -542,6 +575,67 @@
       e.stopPropagation();
       setSlideIndex(id, idx);
     }
+
+    let lightboxState = { propertyId: null, index: 0 };
+
+    function openLightbox(propertyId, index, e) {
+      if (e) e.stopPropagation();
+      const p = propertyCache[propertyId];
+      if (!p || !p.images || p.images.length === 0) return;
+      lightboxState = { propertyId, index };
+      renderLightbox();
+    }
+
+    function renderLightbox() {
+      const p = propertyCache[lightboxState.propertyId];
+      if (!p) return;
+      const images = p.images;
+      const idx = lightboxState.index;
+      const container = document.getElementById("lightbox-container");
+
+      container.innerHTML = `
+        <div class="lightbox-overlay" onclick="closeLightbox()">
+          <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+          <div class="lightbox-img-wrap">
+            ${images.length > 1 ? `<button class="lightbox-arrow prev" onclick="lightboxNav(-1, event)">‹</button>` : ""}
+            <img class="lightbox-img" src="${escapeHtml(images[idx])}" alt="${escapeHtml(p.title)}" onclick="event.stopPropagation()" />
+            ${images.length > 1 ? `<button class="lightbox-arrow next" onclick="lightboxNav(1, event)">›</button>` : ""}
+          </div>
+          ${images.length > 1 ? `<div class="lightbox-counter">${idx + 1} / ${images.length}</div>` : ""}
+          ${images.length > 1 ? `
+            <div class="lightbox-thumbs" onclick="event.stopPropagation()">
+              ${images.map((url, i) => `<img class="lightbox-thumb${i === idx ? " active" : ""}" src="${escapeHtml(url)}" onclick="lightboxGoTo(${i}, event)" />`).join("")}
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    function lightboxNav(dir, e) {
+      if (e) e.stopPropagation();
+      const p = propertyCache[lightboxState.propertyId];
+      if (!p) return;
+      lightboxState.index = (lightboxState.index + dir + p.images.length) % p.images.length;
+      renderLightbox();
+    }
+
+    function lightboxGoTo(i, e) {
+      if (e) e.stopPropagation();
+      lightboxState.index = i;
+      renderLightbox();
+    }
+
+    function closeLightbox(e) {
+      if (e) e.stopPropagation();
+      document.getElementById("lightbox-container").innerHTML = "";
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (!document.getElementById("lightbox-container").innerHTML) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") lightboxNav(-1);
+      if (e.key === "ArrowRight") lightboxNav(1);
+    });
 
     function isValidPhone(phone) {
       const cleaned = phone.replace(/[\s\-()]/g, "");
@@ -798,7 +892,7 @@
       const safeTitle = escapeHtml(p.title);
 
       const photoContent = images.length > 0
-        ? images.map((url, idx) => `<img class="photo-slide${idx === 0 ? " active" : ""}" src="${escapeHtml(url)}" alt="${safeTitle}" />`).join("")
+        ? images.map((url, idx) => `<img class="photo-slide${idx === 0 ? " active" : ""}" src="${escapeHtml(url)}" alt="${safeTitle}" onclick="openLightbox('${p.id}', ${idx}, event)" />`).join("")
         : "";
 
       const sliderControls = images.length > 1

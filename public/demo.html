@@ -221,6 +221,12 @@
   }
   .share-btn:hover { border-color: var(--brass); color: var(--brass-dark); }
   .share-btn.whatsapp:hover { border-color: #2f6f4f; color: #2f6f4f; }
+  .owner-contact {
+    background: var(--stone); border-radius: 4px; padding: 8px 10px; margin: 8px 0; font-size: 11px;
+  }
+  .owner-contact .oc-label { color: var(--slate); font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .owner-contact .oc-name { font-weight: 600; }
+  .owner-contact .oc-phone { font-family: "IBM Plex Mono", monospace; color: var(--brass-dark); }
 
   /* ---------- Photo slider ---------- */
   .photo-slide {
@@ -487,6 +493,7 @@
     const MAX_COMPARE = 3;
     let currentTypeFilter = "";
     let showingFavoritesOnly = false;
+    let orgContact = { name: "", phone: "" };
 
     const favorites = new Set(JSON.parse(localStorage.getItem("aiw_favorites") || "[]"));
 
@@ -644,6 +651,12 @@
       return false;
     }
 
+    function normalizeForWhatsApp(phone) {
+      let digits = String(phone || "").replace(/[^\d]/g, "");
+      if (digits.startsWith("0")) digits = "92" + digits.slice(1);
+      return digits;
+    }
+
     function shareWhatsApp(id) {
       const p = propertyCache[id];
       if (!p) return;
@@ -709,7 +722,11 @@
 
       const text = `Hi, I'm interested in ${p.property_code} — ${p.title} (${p.currency} ${Number(p.price).toLocaleString()}). ${window.location.href.split("?")[0]}`;
       closeWaLeadForm();
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+      const targetNumber = normalizeForWhatsApp(orgContact.phone);
+      const waUrl = targetNumber
+        ? `https://wa.me/${targetNumber}?text=${encodeURIComponent(text)}`
+        : `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, "_blank");
     }
 
     function copyLink(id) {
@@ -929,6 +946,13 @@
             <div class="plot-price">
               <span><span class="cur mono">${escapeHtml(p.currency)}</span><span class="amount">${Number(p.price).toLocaleString()}</span></span>
             </div>
+            ${orgContact.name || orgContact.phone ? `
+              <div class="owner-contact">
+                <div class="oc-label">Contact</div>
+                ${orgContact.name ? `<div class="oc-name">${escapeHtml(orgContact.name)}</div>` : ""}
+                ${orgContact.phone ? `<div class="oc-phone">${escapeHtml(orgContact.phone)}</div>` : ""}
+              </div>
+            ` : ""}
             <div class="card-share-row">
               <button class="share-btn whatsapp" onclick="shareWhatsApp('${p.id}')">WhatsApp</button>
               <button class="share-btn" id="copy-${p.id}" onclick="copyLink('${p.id}')">Copy Link</button>
@@ -961,6 +985,7 @@
         if (branding?.logo_url && logoEl) {
           logoEl.innerHTML = `<img src="${escapeHtml(branding.logo_url)}" alt="${escapeHtml(branding.name || "Logo")}" style="max-height:32px;max-width:180px;object-fit:contain;" />`;
         }
+        orgContact = { name: branding?.contact_name || "", phone: branding?.contact_phone || "" };
       } catch (e) {
         console.error("[Branding] failed to load", e);
       } finally {
@@ -1001,8 +1026,10 @@
       loadListings();
     }
 
-    loadBranding();
-    handleDirectLink();
+    (async function init() {
+      await loadBranding();
+      await handleDirectLink();
+    })();
   </script>
 
   <!-- AI Chat Widget -->

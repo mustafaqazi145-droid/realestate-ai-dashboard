@@ -7,6 +7,8 @@ const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB — logos should always be small
 export default function Settings({ profile, org, onSaved }) {
   const [name, setName] = useState(org?.name || "");
   const [logoUrl, setLogoUrl] = useState(org?.logo_url || "");
+  const [contactName, setContactName] = useState(org?.contact_name || "");
+  const [contactPhone, setContactPhone] = useState(org?.contact_phone || "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -43,7 +45,7 @@ export default function Settings({ profile, org, onSaved }) {
     setSaving(true);
     const { error } = await supabase
       .from("organizations")
-      .update({ name, logo_url: logoUrl || null })
+      .update({ name, logo_url: logoUrl || null, contact_name: contactName || null, contact_phone: contactPhone || null })
       .eq("id", profile.org_id);
     setSaving(false);
     if (error) {
@@ -91,6 +93,16 @@ export default function Settings({ profile, org, onSaved }) {
         <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 20 }}>
           This name and logo will show in your admin dashboard sidebar and on your public
           customer-facing page — everywhere your business appears.
+        </div>
+
+        <label>Owner / Agent name (shown on property cards)</label>
+        <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="e.g. Sweets or Agents" style={{ marginBottom: 18 }} />
+
+        <label>WhatsApp number</label>
+        <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="e.g. 03001234567" style={{ marginBottom: 8 }} />
+        <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 20 }}>
+          Buyers will see this name and number on every listing, so they can save it before
+          messaging — and the WhatsApp button will message this number directly.
         </div>
 
         <button className="btn btn-brass" onClick={handleSave} disabled={saving || uploading}>

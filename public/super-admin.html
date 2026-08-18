@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Super Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #14161a; --paper: #ffffff; --stone: #eef0ec; --brass: #b8863b; --brass-dark: #96692b;
+    --ledger: #2f6f4f; --rust: #a6402f; --slate: #6b7280; --line: #d9d8d0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ink); color: #f2f1ec; font-family: "Inter", sans-serif; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+  h1, h2 { font-family: "Fraunces", serif; margin: 0; }
+
+  .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card { background: var(--paper); color: var(--ink); padding: 36px; border-radius: 10px; width: 100%; max-width: 360px; }
+  .login-card h1 { font-size: 22px; margin-bottom: 4px; }
+  .login-card .sub { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brass-dark); margin-bottom: 24px; }
+  .login-card input { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 12px; font-size: 13px; box-sizing: border-box; }
+  .login-card button { width: 100%; padding: 11px; background: var(--ink); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
+  .error-text { color: var(--rust); font-size: 12px; margin-top: 8px; }
+
+  .app-wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px; display: none; }
+  .app-wrap.visible { display: block; }
+  .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .header-row .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brass); margin-bottom: 4px; }
+  .header-row h1 { font-size: 26px; color: #fff; }
+  .btn { background: var(--brass); color: #fff; border: none; padding: 9px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .btn:hover { background: var(--brass-dark); }
+  .btn-ghost { background: transparent; border: 1px solid #3a3c3f; color: #cfcdc4; }
+  .btn-danger { background: transparent; border: 1px solid var(--rust); color: var(--rust); }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+  section { background: #1c1e23; border: 1px solid #2a2c31; border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+  section h2 { font-size: 16px; color: #fff; margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-family: "IBM Plex Mono", monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #8b897f; padding: 8px 10px; border-bottom: 1px solid #2a2c31; }
+  td { padding: 10px; border-bottom: 1px solid #2a2c31; vertical-align: middle; }
+  select, input.inline { background: #14161a; border: 1px solid #3a3c3f; color: #f2f1ec; padding: 6px 8px; border-radius: 5px; font-size: 12px; }
+  .badge { font-family: "IBM Plex Mono", monospace; font-size: 10px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+  .badge-active { background: rgba(47,111,79,0.2); color: #5fbf8a; }
+  .badge-suspended { background: rgba(166,64,47,0.2); color: #d97f6f; }
+  .badge-expired { background: rgba(192,138,46,0.2); color: #e0b366; }
+
+  .new-org-form, .link-user-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; align-items: end; }
+  .new-org-form label, .link-user-form label { display: block; font-size: 10px; color: #8b897f; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .new-org-form input, .link-user-form input, .new-org-form select, .link-user-form select {
+    width: 100%; background: #14161a; border: 1px solid #3a3c3f; color: #f2f1ec; padding: 8px; border-radius: 5px; font-size: 12px; box-sizing: border-box;
+  }
+  .status-msg { font-size: 12px; color: #8b897f; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <h1>Super Admin</h1>
+      <div class="sub">Platform Control</div>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Sign in</button>
+      <div class="error-text" id="login-error"></div>
+    </div>
+  </div>
+
+  <div id="app-wrap" class="app-wrap">
+    <div class="header-row">
+      <div>
+        <div class="eyebrow">Platform Owner</div>
+        <h1>Client Organizations</h1>
+      </div>
+      <button class="btn btn-ghost" onclick="logout()">Sign out</button>
+    </div>
+
+    <section>
+      <h2>Create New Organization</h2>
+      <div class="new-org-form">
+        <div>
+          <label>Business name</label>
+          <input type="text" id="new-org-name" placeholder="e.g. City Realty" />
+        </div>
+        <div>
+          <label>Slug (unique, no spaces)</label>
+          <input type="text" id="new-org-slug" placeholder="e.g. city-realty" />
+        </div>
+        <div>
+          <label>Plan</label>
+          <select id="new-org-plan">
+            <option value="trial">Trial (7 days)</option>
+            <option value="starter">Starter</option>
+            <option value="pro">Pro</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn" onclick="createOrg()">Create Organization</button>
+        </div>
+      </div>
+      <div class="status-msg" id="new-org-status"></div>
+    </section>
+
+    <section>
+      <h2>Link an Admin User to an Organization</h2>
+      <div class="status-msg" style="margin-bottom: 12px;">
+        First create the login in Supabase Dashboard → Authentication → Users → Add user,
+        then paste their UID here to connect them to an org as admin.
+      </div>
+      <div class="link-user-form">
+        <div>
+          <label>User UID</label>
+          <input type="text" id="link-uid" placeholder="auth user UID" />
+        </div>
+        <div>
+          <label>Organization</label>
+          <select id="link-org"></select>
+        </div>
+        <div>
+          <label>Full name</label>
+          <input type="text" id="link-name" placeholder="Their name" />
+        </div>
+        <div>
+          <label>Email</label>
+          <input type="text" id="link-email" placeholder="their@email.com" />
+        </div>
+        <div>
+          <button class="btn" onclick="linkUser()">Link as Admin</button>
+        </div>
+      </div>
+      <div class="status-msg" id="link-status"></div>
+    </section>
+
+    <section>
+      <h2>All Organizations</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Plan</th><th>Trial Ends</th><th>Status</th><th>Created</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="orgs-tbody"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const SUPABASE_URL = "https://wduuigczfxotwuotafvl.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXVpZ2N6ZnhvdHd1b3RhZnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzY4MTAsImV4cCI6MjEwMDcxMjgxMH0.vr0aVliwvnNMSOG3u2gF859uClklUrRc1pBSm3ZgyQQ";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.supabase = supabase;
+
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const errEl = document.getElementById("login-error");
+      errEl.textContent = "";
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        errEl.textContent = error.message;
+        return;
+      }
+      await checkAccessAndLoad();
+    }
+
+    async function checkAccessAndLoad() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error || !profile?.is_super_admin) {
+        document.getElementById("login-error").textContent = "This account doesn't have super admin access.";
+        await supabase.auth.signOut();
+        return;
+      }
+
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app-wrap").classList.add("visible");
+      await loadOrgs();
+    }
+
+    window.login = login;
+
+    window.logout = async function () {
+      await supabase.auth.signOut();
+      window.location.reload();
+    };
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function statusBadge(org) {
+      if (org.is_active === false) return `<span class="badge badge-suspended">Suspended</span>`;
+      if (org.plan === "trial" && org.trial_ends_at && new Date(org.trial_ends_at) < new Date()) {
+        return `<span class="badge badge-expired">Trial Expired</span>`;
+      }
+      return `<span class="badge badge-active">Active</span>`;
+    }
+
+    async function loadOrgs() {
+      const { data: orgs, error } = await supabase
+        .from("organizations")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const tbody = document.getElementById("orgs-tbody");
+      tbody.innerHTML = orgs.map((o) => `
+        <tr>
+          <td><strong>${escapeHtml(o.name)}</strong><div class="mono" style="font-size:10px; color:#8b897f;">${escapeHtml(o.slug)}</div></td>
+          <td>
+            <select onchange="updatePlan('${o.id}', this.value)">
+              ${["trial","starter","pro","enterprise"].map((p) => `<option value="${p}" ${o.plan === p ? "selected" : ""}>${p}</option>`).join("")}
+            </select>
+          </td>
+          <td class="mono">${o.trial_ends_at ? new Date(o.trial_ends_at).toLocaleDateString() : "—"}</td>
+          <td>${statusBadge(o)}</td>
+          <td class="mono">${new Date(o.created_at).toLocaleDateString()}</td>
+          <td style="white-space:nowrap;">
+            <button class="btn btn-ghost btn-sm" onclick="extendTrial('${o.id}', 7)">+7d</button>
+            <button class="btn btn-ghost btn-sm" onclick="extendTrial('${o.id}', 30)">+30d</button>
+            ${o.is_active === false
+              ? `<button class="btn btn-sm" onclick="toggleActive('${o.id}', true)">Activate</button>`
+              : `<button class="btn btn-danger btn-sm" onclick="toggleActive('${o.id}', false)">Suspend</button>`}
+          </td>
+        </tr>
+      `).join("");
+
+      const linkOrgSelect = document.getElementById("link-org");
+      linkOrgSelect.innerHTML = orgs.map((o) => `<option value="${o.id}">${escapeHtml(o.name)}</option>`).join("");
+    }
+
+    window.updatePlan = async function (orgId, plan) {
+      await supabase.from("organizations").update({ plan }).eq("id", orgId);
+      await loadOrgs();
+    };
+
+    window.extendTrial = async function (orgId, days) {
+      const { data: org } = await supabase.from("organizations").select("trial_ends_at").eq("id", orgId).single();
+      const base = org?.trial_ends_at && new Date(org.trial_ends_at) > new Date() ? new Date(org.trial_ends_at) : new Date();
+      base.setDate(base.getDate() + days);
+      await supabase.from("organizations").update({ trial_ends_at: base.toISOString() }).eq("id", orgId);
+      await loadOrgs();
+    };
+
+    window.toggleActive = async function (orgId, active) {
+      await supabase.from("organizations").update({ is_active: active }).eq("id", orgId);
+      await loadOrgs();
+    };
+
+    window.createOrg = async function () {
+      const name = document.getElementById("new-org-name").value.trim();
+      const slug = document.getElementById("new-org-slug").value.trim();
+      const plan = document.getElementById("new-org-plan").value;
+      const statusEl = document.getElementById("new-org-status");
+
+      if (!name || !slug) {
+        statusEl.textContent = "Name and slug are required.";
+        return;
+      }
+
+      const trialEndsAt = plan === "trial" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null;
+
+      const { error } = await supabase.from("organizations").insert({ name, slug, plan, trial_ends_at: trialEndsAt });
+      if (error) {
+        statusEl.textContent = `Failed: ${error.message}`;
+        return;
+      }
+      statusEl.textContent = `"${name}" created. Now create their login and link it below.`;
+      document.getElementById("new-org-name").value = "";
+      document.getElementById("new-org-slug").value = "";
+      await loadOrgs();
+    };
+
+    window.linkUser = async function () {
+      const uid = document.getElementById("link-uid").value.trim();
+      const orgId = document.getElementById("link-org").value;
+      const fullName = document.getElementById("link-name").value.trim();
+      const email = document.getElementById("link-email").value.trim();
+      const statusEl = document.getElementById("link-status");
+
+      if (!uid || !orgId) {
+        statusEl.textContent = "User UID and organization are required.";
+        return;
+      }
+
+      const { error } = await supabase.from("profiles").insert({
+        id: uid, org_id: orgId, role: "admin", full_name: fullName || null, email: email || null,
+      });
+      if (error) {
+        statusEl.textContent = `Failed: ${error.message}`;
+        return;
+      }
+      statusEl.textContent = "Linked successfully — they can now log into their dashboard.";
+      document.getElementById("link-uid").value = "";
+      document.getElementById("link-name").value = "";
+      document.getElementById("link-email").value = "";
+    };
+
+    // Auto-login if already signed in
+    checkAccessAndLoad();
+  </script>
+</body>
+</html>

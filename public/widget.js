@@ -393,6 +393,8 @@
       if (data.error) {
         if (data.error === "rate_limited") {
           addAssistantMessage("You're sending messages a bit fast — please wait a few seconds and try again.");
+        } else if (data.error === "org_inactive") {
+          addAssistantMessage("This assistant is currently unavailable. Please contact us directly for help.");
         } else {
           addAssistantMessage("Sorry, something went wrong on our end. Please try again in a moment.");
         }

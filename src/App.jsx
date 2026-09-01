@@ -14,6 +14,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [org, setOrg] = useState(null);
+  const [orgActive, setOrgActive] = useState(null); // null = not checked yet
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,6 +53,19 @@ export default function App() {
       .eq("id", orgId)
       .single()
       .then(({ data }) => setOrg(data));
+
+    // Authoritative, server-side check — same function that gates the
+    // customer-facing widget/leads, now also gating the dashboard itself.
+    supabase
+      .rpc("org_is_active", { p_org_id: orgId })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("org_is_active check failed:", error.message);
+          setOrgActive(true); // fail open on a check error, don't lock someone out by accident
+          return;
+        }
+        setOrgActive(data);
+      });
   }
 
   useEffect(() => {
@@ -72,6 +86,33 @@ export default function App() {
             Run the profile-linking SQL from <code>0003_storage_and_admin.sql</code> with your
             user ID, then refresh this page.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Wait for the active-status check before showing anything dashboard-related
+  if (orgActive === null) return null;
+
+  if (orgActive === false) {
+    return (
+      <div className="login-screen">
+        <div className="login-card">
+          <div className="brand">Trial Ended</div>
+          <p style={{ fontSize: 13, color: "var(--slate)", marginBottom: 16 }}>
+            Your access to this dashboard has ended, or your account has been paused.
+            To continue using your property assistant, please contact your account manager.
+          </p>
+          <button
+            className="btn btn-ghost"
+            style={{ width: "100%" }}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.reload();
+            }}
+          >
+            Sign out
+          </button>
         </div>
       </div>
     );

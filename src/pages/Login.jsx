@@ -5,13 +5,33 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [mode, setMode] = useState("signin"); // "signin" | "signup"
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setInfo("");
     setLoading(true);
+
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      setLoading(false);
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      // If email confirmation is required, there's no session yet.
+      if (!data.session) {
+        setInfo("Account created — check your email to confirm before signing in.");
+      }
+      // If confirmation is disabled, Supabase already returns a session and
+      // onAuthStateChange in App.jsx picks it up, which triggers self_provision_org.
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) setError(error.message);
@@ -92,10 +112,41 @@ export default function Login() {
             required
           />
           {error && <div className="error-text">{error}</div>}
+          {info && (
+            <div style={{ fontSize: 12, color: "var(--slate)", marginTop: 8 }}>{info}</div>
+          )}
           <button type="submit" className="btn btn-brass" style={{ width: "100%", marginTop: 20 }} disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+            {loading
+              ? mode === "signup" ? "Creating account…" : "Signing in…"
+              : mode === "signup" ? "Sign up" : "Sign in"}
           </button>
         </form>
+
+        <div style={{ textAlign: "center", marginTop: 16, fontSize: 12, color: "var(--slate)" }}>
+          {mode === "signin" ? (
+            <>
+              Don't have an account?{" "}
+              <button
+                type="button"
+                onClick={() => { setMode("signup"); setError(""); setInfo(""); }}
+                style={{ background: "none", border: "none", padding: 0, color: "var(--brass, #b8860b)", cursor: "pointer", fontWeight: 600 }}
+              >
+                Sign up
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => { setMode("signin"); setError(""); setInfo(""); }}
+                style={{ background: "none", border: "none", padding: 0, color: "var(--brass, #b8860b)", cursor: "pointer", fontWeight: 600 }}
+              >
+                Sign in
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

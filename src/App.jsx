@@ -16,6 +16,8 @@ export default function App() {
   const [org, setOrg] = useState(null);
   const [orgActive, setOrgActive] = useState(null); // null = not checked yet
   const [loading, setLoading] = useState(true);
+  const [provisioning, setProvisioning] = useState(false);
+  const [provisionError, setProvisionError] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -33,18 +35,42 @@ export default function App() {
       setProfile(null);
       return;
     }
+    fetchOrProvisionProfile();
+  }, [session]);
+
+  function fetchOrProvisionProfile() {
+    setProvisionError("");
     supabase
       .from("profiles")
       .select("*")
       .eq("id", session.user.id)
-      .single()
+      .maybeSingle()
       .then(({ data, error }) => {
         if (error) {
-          console.error("No profile row found for this user yet:", error.message);
+          console.error("Profile fetch failed:", error.message);
+          setProvisionError(error.message);
+          return;
         }
-        setProfile(data);
+        if (data) {
+          setProfile(data);
+          return;
+        }
+        // No profile row yet (first login for this user) — self-provision
+        // an organization + profile via the server-side RPC.
+        setProvisioning(true);
+        supabase
+          .rpc("self_provision_org")
+          .then(({ data: newProfile, error: rpcError }) => {
+            setProvisioning(false);
+            if (rpcError) {
+              console.error("self_provision_org failed:", rpcError.message);
+              setProvisionError(rpcError.message);
+              return;
+            }
+            setProfile(newProfile);
+          });
       });
-  }, [session]);
+  }
 
   function loadOrg(orgId) {
     supabase
@@ -77,15 +103,31 @@ export default function App() {
   if (!session) return <Login />;
 
   if (!profile) {
+    if (provisionError) {
+      return (
+        <div className="login-screen">
+          <div className="login-card">
+            <div className="brand">Setup failed</div>
+            <p style={{ fontSize: 13, color: "var(--slate)", marginBottom: 16 }}>
+              We couldn't finish setting up your account: {provisionError}
+            </p>
+            <button
+              className="btn btn-brass"
+              style={{ width: "100%" }}
+              onClick={fetchOrProvisionProfile}
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="login-screen">
         <div className="login-card">
-          <div className="brand">Almost there</div>
-          <p style={{ fontSize: 13, color: "var(--slate)" }}>
-            You're signed in, but no organization profile is linked to this account yet.
-            Run the profile-linking SQL from <code>0003_storage_and_admin.sql</code> with your
-            user ID, then refresh this page.
-          </p>
+          <div className="brand">
+            {provisioning ? "Setting up your account…" : "Loading…"}
+          </div>
         </div>
       </div>
     );

@@ -1026,20 +1026,63 @@
       loadListings();
     }
 
+    // --- Access gate: mirrors the same org_is_active() check the admin
+    // dashboard and backend RPCs enforce, so a suspended org's public
+    // widget stops working too, not just their internal dashboard. ---
+    async function checkOrgActive() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/org_is_active`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ p_org_id: ORG_ID }),
+        });
+        if (!res.ok) return true; // fail open on a check error — don't block by accident
+        const data = await res.json();
+        return data === true;
+      } catch (e) {
+        console.error("[org_is_active] check failed", e);
+        return true; // fail open on a network error
+      }
+    }
+
+    function showSuspendedScreen() {
+      document.body.innerHTML = `
+        <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; background: var(--stone); padding: 24px;">
+          <div style="background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 40px; max-width: 420px; text-align:center;">
+            <h1 style="font-size: 22px; margin-bottom: 12px;">Temporarily Unavailable</h1>
+            <p style="font-size: 14px; color: var(--slate); line-height: 1.6; margin: 0;">
+              This property listing service isn't active right now. Please check back later or contact the agency directly.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function loadChatWidget() {
+      const s = document.createElement("script");
+      s.src = "widget.js";
+      s.setAttribute("data-org-id", ORG_ID);
+      s.setAttribute("data-supabase-url", SUPABASE_URL);
+      s.setAttribute("data-supabase-anon-key", SUPABASE_ANON_KEY);
+      s.setAttribute("data-function-url", `${SUPABASE_URL}/functions/v1/property-search`);
+      s.setAttribute("data-agent-name", "Sarah");
+      document.body.appendChild(s);
+    }
+
     (async function init() {
+      const active = await checkOrgActive();
+      if (!active) {
+        showSuspendedScreen();
+        return;
+      }
       await loadBranding();
       await handleDirectLink();
+      loadChatWidget();
     })();
   </script>
-
-  <!-- AI Chat Widget -->
-  <script
-    src="widget.js"
-    data-org-id="11111111-1111-1111-1111-111111111111"
-    data-supabase-url="https://wduuigczfxotwuotafvl.supabase.co"
-    data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXVpZ2N6ZnhvdHd1b3RhZnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzY4MTAsImV4cCI6MjEwMDcxMjgxMH0.vr0aVliwvnNMSOG3u2gF859uClklUrRc1pBSm3ZgyQQ"
-    data-function-url="https://wduuigczfxotwuotafvl.supabase.co/functions/v1/property-search"
-    data-agent-name="Sarah"
-  ></script>
 </body>
 </html>

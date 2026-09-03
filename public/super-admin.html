@@ -195,8 +195,12 @@
           .upload(path, blob, { contentType: "text/html", upsert: true });
         if (uploadError) throw uploadError;
 
-        const { data } = supabase.storage.from("widgets").getPublicUrl(path);
-        await navigator.clipboard.writeText(data.publicUrl);
+        // Storage forces .html files to serve as text/plain (a documented,
+        // permanent Supabase security behavior) — so we hand out a link to
+        // the serve-widget Edge Function instead, which reads the file and
+        // re-serves it with a proper text/html header.
+        const shareUrl = `${SUPABASE_URL}/functions/v1/serve-widget?org=${encodeURIComponent(orgSlug || orgId)}`;
+        await navigator.clipboard.writeText(shareUrl);
         btnEl.textContent = "Link copied!";
       } catch (e) {
         console.error("[uploadWidget] failed", e);

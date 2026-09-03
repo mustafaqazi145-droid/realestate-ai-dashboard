@@ -139,7 +139,7 @@
       <table>
         <thead>
           <tr>
-            <th>Name</th><th>Plan</th><th>Trial Ends</th><th>Status</th><th>Created</th><th></th>
+            <th>Name</th><th>Owner</th><th>Plan</th><th>Trial Ends</th><th>Status</th><th>Created</th><th></th>
           </tr>
         </thead>
         <tbody id="orgs-tbody"></tbody>
@@ -214,7 +214,7 @@
     async function loadOrgs() {
       const { data: orgs, error } = await supabase
         .from("organizations")
-        .select("*")
+        .select("*, profiles(id, full_name, email, role)")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -223,9 +223,15 @@
       }
 
       const tbody = document.getElementById("orgs-tbody");
-      tbody.innerHTML = orgs.map((o) => `
+      tbody.innerHTML = orgs.map((o) => {
+        const owner = (o.profiles || []).find((p) => p.role === "admin") || (o.profiles || [])[0];
+        const ownerHtml = owner
+          ? `${escapeHtml(owner.full_name || "—")}<div class="mono" style="font-size:10px; color:#8b897f;">${escapeHtml(owner.email || "")}</div>`
+          : `<span class="mono" style="font-size:11px; color:#8b897f;">no profile yet</span>`;
+        return `
         <tr>
           <td><strong>${escapeHtml(o.name)}</strong><div class="mono" style="font-size:10px; color:#8b897f;">${escapeHtml(o.slug)}</div></td>
+          <td>${ownerHtml}</td>
           <td>
             <select onchange="updatePlan('${o.id}', this.value)">
               ${["trial","starter","pro","enterprise"].map((p) => `<option value="${p}" ${o.plan === p ? "selected" : ""}>${p}</option>`).join("")}
@@ -236,17 +242,26 @@
           <td class="mono">${new Date(o.created_at).toLocaleDateString()}</td>
           <td style="white-space:nowrap;">
             <button class="btn btn-ghost btn-sm" onclick="extendTrial('${o.id}', 7)">+7d</button>
-            <button class="btn btn-ghost btn-sm" onclick="extendTrial('${o.id}', 30)">+30d</button>
+            <button class="btn btn-ghost btn-sm" onclick="approveIndefinite('${o.id}')">Approve ✓</button>
             ${o.is_active === false
               ? `<button class="btn btn-sm" onclick="toggleActive('${o.id}', true)">Activate</button>`
-              : `<button class="btn btn-danger btn-sm" onclick="toggleActive('${o.id}', false)">Suspend</button>`}
+              : `<button class="btn btn-danger btn-sm" onclick="toggleActive('${o.id}', false)">Block</button>`}
           </td>
         </tr>
-      `).join("");
+      `;
+      }).join("");
 
       const linkOrgSelect = document.getElementById("link-org");
       linkOrgSelect.innerHTML = orgs.map((o) => `<option value="${o.id}">${escapeHtml(o.name)}</option>`).join("");
     }
+
+    // Keep the user's access running indefinitely past their trial —
+    // moves them off the "trial" plan (which is the only plan the
+    // trial_ends_at deadline applies to) without touching is_active.
+    window.approveIndefinite = async function (orgId) {
+      await supabase.from("organizations").update({ plan: "starter", trial_ends_at: null }).eq("id", orgId);
+      await loadOrgs();
+    };
 
     window.updatePlan = async function (orgId, plan) {
       await supabase.from("organizations").update({ plan }).eq("id", orgId);

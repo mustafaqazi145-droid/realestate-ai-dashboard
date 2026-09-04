@@ -98,6 +98,22 @@ export default function App() {
     if (profile?.org_id) loadOrg(profile.org_id);
   }, [profile]);
 
+  // Re-check org_is_active in the background — if a super admin blocks this
+  // org while the dashboard is already open, lock it out without requiring
+  // a manual refresh.
+  useEffect(() => {
+    if (!profile?.org_id) return;
+    const interval = setInterval(() => {
+      supabase
+        .rpc("org_is_active", { p_org_id: profile.org_id })
+        .then(({ data, error }) => {
+          if (error) return; // fail open on a transient check error
+          setOrgActive(data);
+        });
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [profile]);
+
   if (loading) return null;
 
   if (!session) return <Login />;

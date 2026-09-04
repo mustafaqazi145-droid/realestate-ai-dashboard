@@ -202,7 +202,7 @@
         // Served via our own Cloudflare Pages Function (not Supabase) —
         // Supabase forces .html to be non-executable on its shared domain,
         // Cloudflare (our own project) doesn't have that restriction.
-        const shareUrl = `https://realestate-ai-dashboard.mustafaqzh4s.workers.dev/widget?org=${encodeURIComponent(orgSlug || orgId)}`;
+        const shareUrl = `https://realestate-ai-dashboard.mustafaqazi145.workers.dev/widget?org=${encodeURIComponent(orgSlug || orgId)}`;
         await navigator.clipboard.writeText(shareUrl);
         btnEl.textContent = "Link copied!";
       } catch (e) {

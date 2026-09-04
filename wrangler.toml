@@ -1,0 +1,7 @@
+name = "realestate-ai-dashboard"
+main = "src/worker.js"
+compatibility_date = "2026-09-03"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"

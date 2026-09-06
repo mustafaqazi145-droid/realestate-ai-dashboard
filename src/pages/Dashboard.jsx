@@ -4,13 +4,15 @@ import StatusBadge from "../components/StatusBadge";
 import PropertyFormModal from "../components/PropertyFormModal";
 import ImageSlider from "../components/ImageSlider";
 import { showToast } from "../toast";
+import UpgradeModal from "./UpgradeModal";
 
-export default function Dashboard({ profile }) {
+export default function Dashboard({ profile, orgFeatures, orgName }) {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [selected, setSelected] = useState(new Set());
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   async function loadProperties() {
     setLoading(true);
@@ -62,7 +64,16 @@ export default function Dashboard({ profile }) {
     loadProperties();
   }
 
+  // Plan limit — computed from the live count on this page, so it's
+  // always accurate even the moment a property gets added or deleted.
+  const maxProperties = orgFeatures?.max_properties ?? null;
+  const atLimit = maxProperties != null && properties.length >= maxProperties;
+
   function openAdd() {
+    if (atLimit) {
+      setShowUpgrade(true);
+      return;
+    }
     setEditing(null);
     setModalOpen(true);
   }
@@ -91,9 +102,41 @@ export default function Dashboard({ profile }) {
               Delete {selected.size} selected
             </button>
           )}
-          <button className="btn btn-brass" onClick={openAdd}>+ Add property</button>
+          <button
+            className="btn btn-brass"
+            onClick={openAdd}
+            style={atLimit ? { opacity: 0.6, cursor: "pointer" } : undefined}
+            title={atLimit ? `You've reached your plan's limit of ${maxProperties} properties` : undefined}
+          >
+            {atLimit ? `Limit reached (${maxProperties})` : "+ Add property"}
+          </button>
         </div>
       </div>
+
+      {atLimit && (
+        <div
+          style={{
+            background: "var(--stone)",
+            border: "1px dashed var(--line)",
+            borderRadius: 8,
+            padding: "12px 16px",
+            marginBottom: 18,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+            fontSize: 13,
+          }}
+        >
+          <span>
+            You've reached your plan's limit of <strong>{maxProperties} properties</strong>. Upgrade to add more.
+          </span>
+          <button className="btn btn-brass" onClick={() => setShowUpgrade(true)}>
+            Upgrade Plan
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ color: "var(--slate)" }}>Loading…</div>
@@ -159,6 +202,8 @@ export default function Dashboard({ profile }) {
           onSaved={handleSaved}
         />
       )}
+
+      {showUpgrade && <UpgradeModal orgName={orgName} onClose={() => setShowUpgrade(false)} />}
     </div>
   );
 }

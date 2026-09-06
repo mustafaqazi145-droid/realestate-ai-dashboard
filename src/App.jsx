@@ -14,6 +14,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [org, setOrg] = useState(null);
+  const [orgFeatures, setOrgFeatures] = useState(null);
   const [orgActive, setOrgActive] = useState(null); // null = not checked yet
   const [loading, setLoading] = useState(true);
   const [provisioning, setProvisioning] = useState(false);
@@ -79,6 +80,19 @@ export default function App() {
       .eq("id", orgId)
       .single()
       .then(({ data }) => setOrg(data));
+
+    // What this plan does/doesn't include — same source of truth the
+    // customer-facing widget checks, so dashboard and widget never
+    // disagree about what's unlocked.
+    supabase
+      .rpc("public_get_org_features", { p_org_id: orgId })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("public_get_org_features failed:", error.message);
+          return;
+        }
+        setOrgFeatures(Array.isArray(data) ? data[0] : data);
+      });
 
     // Authoritative, server-side check — same function that gates the
     // customer-facing widget/leads, now also gating the dashboard itself.
@@ -183,11 +197,11 @@ export default function App() {
         <div className="main">
           <Routes>
             <Route path="/" element={<Overview profile={profile} />} />
-            <Route path="/properties" element={<Dashboard profile={profile} />} />
+            <Route path="/properties" element={<Dashboard profile={profile} orgFeatures={orgFeatures} />} />
             <Route path="/leads" element={<Leads profile={profile} />} />
             <Route path="/viewings" element={<Viewings profile={profile} />} />
             <Route path="/import" element={<Import profile={profile} />} />
-            <Route path="/settings" element={<Settings profile={profile} org={org} onSaved={() => loadOrg(profile.org_id)} />} />
+            <Route path="/settings" element={<Settings profile={profile} org={org} orgFeatures={orgFeatures} onSaved={() => loadOrg(profile.org_id)} />} />
           </Routes>
         </div>
       </div>

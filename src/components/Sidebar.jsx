@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-
+import UpgradeModal from "../pages/UpgradeModal";
 const icons = {
   overview: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -35,12 +36,12 @@ const icons = {
     </svg>
   ),
 };
-
 export default function Sidebar({ profile, org }) {
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
   async function handleLogout() {
     await supabase.auth.signOut();
   }
-
   return (
     <div className="sidebar">
       {org?.logo_url ? (
@@ -49,7 +50,6 @@ export default function Sidebar({ profile, org }) {
         <div className="brand">{org?.name || "Property Console"}</div>
       )}
       <div className="brand-sub">Agent Workspace</div>
-
       <NavLink to="/" end className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
         {icons.overview} Overview
       </NavLink>
@@ -68,11 +68,13 @@ export default function Sidebar({ profile, org }) {
       <NavLink to="/settings" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
         {icons.settings} Settings
       </NavLink>
-
       <div className="sidebar-footer">
         {profile?.full_name || profile?.email || "Signed in"}
+        <button onClick={() => setShowUpgrade(true)} style={{ marginBottom: 8 }}>Upgrade Plan</button>
         <button onClick={handleLogout}>Sign out</button>
       </div>
+
+      {showUpgrade && <UpgradeModal orgName={org?.name} onClose={() => setShowUpgrade(false)} />}
     </div>
   );
 }

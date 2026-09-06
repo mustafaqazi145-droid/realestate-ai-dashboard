@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { showToast } from "../toast";
+import UpgradeModal from "./UpgradeModal";
 
 const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB — logos should always be small
 
@@ -11,6 +12,7 @@ export default function Settings({ profile, org, orgFeatures, onSaved }) {
   const [contactPhone, setContactPhone] = useState(org?.contact_phone || "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   // Fail open while orgFeatures hasn't loaded yet, so the fields don't
   // flash "locked" before we actually know the plan.
@@ -67,7 +69,12 @@ export default function Settings({ profile, org, orgFeatures, onSaved }) {
           <div className="eyebrow">Branding</div>
           <h1>Settings</h1>
         </div>
+        <button className="btn btn-brass" onClick={() => setShowUpgrade(true)}>
+          Upgrade Plan
+        </button>
       </div>
+
+      {showUpgrade && <UpgradeModal orgName={org?.name} onClose={() => setShowUpgrade(false)} />}
 
       <div style={{ maxWidth: 480, background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 10, padding: 24 }}>
         {brandingLocked ? (
@@ -89,7 +96,7 @@ export default function Settings({ profile, org, orgFeatures, onSaved }) {
             <button
               type="button"
               className="btn btn-brass"
-              onClick={() => window.open("https://wa.me/923340159006?text=" + encodeURIComponent("I'd like to upgrade to the Professional plan"), "_blank")}
+              onClick={() => setShowUpgrade(true)}
             >
               Upgrade to Professional
             </button>

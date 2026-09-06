@@ -124,7 +124,7 @@ export default function App() {
           if (error) return; // fail open on a transient check error
           setOrgActive(data);
         });
-    }, 30000);
+    }, 10000);
     return () => clearInterval(interval);
   }, [profile]);
 

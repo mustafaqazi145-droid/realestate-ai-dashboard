@@ -105,6 +105,21 @@
     </section>
 
     <section>
+      <h2>Plan Pricing</h2>
+      <div class="status-msg" style="margin-bottom: 12px;">
+        These prices show live in every buyer's dashboard "Upgrade Plan" screen — change a
+        number here and it updates everywhere immediately.
+      </div>
+      <table>
+        <thead>
+          <tr><th>Plan</th><th>Monthly Price (Rs)</th><th>Setup Fee (Rs)</th><th></th></tr>
+        </thead>
+        <tbody id="pricing-tbody"></tbody>
+      </table>
+      <div class="status-msg" id="pricing-status"></div>
+    </section>
+
+    <section>
       <h2>Link an Admin User to an Organization</h2>
       <div class="status-msg" style="margin-bottom: 12px;">
         First create the login in Supabase Dashboard → Authentication → Users → Add user,
@@ -246,6 +261,7 @@
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app-wrap").classList.add("visible");
       await loadOrgs();
+      await loadPricing();
     }
 
     window.login = login;
@@ -332,6 +348,48 @@
         btnEl.textContent = "Copied!";
         setTimeout(() => { btnEl.textContent = original; }, 1200);
       });
+    };
+
+    const PLAN_LABELS = { starter: "Starter", pro: "Professional", enterprise: "Enterprise" };
+
+    async function loadPricing() {
+      const { data: rows, error } = await supabase
+        .from("plan_pricing")
+        .select("*")
+        .order("monthly_price", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const tbody = document.getElementById("pricing-tbody");
+      tbody.innerHTML = rows.map((r) => `
+        <tr>
+          <td><strong>${PLAN_LABELS[r.plan] || r.plan}</strong></td>
+          <td><input class="inline" type="number" id="price-monthly-${r.plan}" value="${r.monthly_price}" style="width:110px;" /></td>
+          <td><input class="inline" type="number" id="price-setup-${r.plan}" value="${r.setup_fee}" style="width:110px;" /></td>
+          <td><button class="btn btn-sm" onclick="savePricing('${r.plan}')">Save</button></td>
+        </tr>
+      `).join("");
+    }
+
+    window.savePricing = async function (plan) {
+      const monthly_price = Number(document.getElementById(`price-monthly-${plan}`).value);
+      const setup_fee = Number(document.getElementById(`price-setup-${plan}`).value);
+      const statusEl = document.getElementById("pricing-status");
+
+      const { error } = await supabase
+        .from("plan_pricing")
+        .update({ monthly_price, setup_fee, updated_at: new Date().toISOString() })
+        .eq("plan", plan);
+
+      if (error) {
+        statusEl.textContent = `Failed to save ${plan}: ${error.message}`;
+        return;
+      }
+      statusEl.textContent = `${PLAN_LABELS[plan] || plan} pricing updated.`;
+      await loadPricing();
     };
 
     window.updatePlan = async function (orgId, plan) {

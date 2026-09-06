@@ -197,7 +197,7 @@ export default function App() {
         <div className="main">
           <Routes>
             <Route path="/" element={<Overview profile={profile} />} />
-            <Route path="/properties" element={<Dashboard profile={profile} orgFeatures={orgFeatures} />} />
+            <Route path="/properties" element={<Dashboard profile={profile} orgFeatures={orgFeatures} orgName={org?.name} />} />
             <Route path="/leads" element={<Leads profile={profile} />} />
             <Route path="/viewings" element={<Viewings profile={profile} />} />
             <Route path="/import" element={<Import profile={profile} />} />

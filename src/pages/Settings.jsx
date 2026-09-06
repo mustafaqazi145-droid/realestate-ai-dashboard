@@ -4,13 +4,17 @@ import { showToast } from "../toast";
 
 const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB — logos should always be small
 
-export default function Settings({ profile, org, onSaved }) {
+export default function Settings({ profile, org, orgFeatures, onSaved }) {
   const [name, setName] = useState(org?.name || "");
   const [logoUrl, setLogoUrl] = useState(org?.logo_url || "");
   const [contactName, setContactName] = useState(org?.contact_name || "");
   const [contactPhone, setContactPhone] = useState(org?.contact_phone || "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Fail open while orgFeatures hasn't loaded yet, so the fields don't
+  // flash "locked" before we actually know the plan.
+  const brandingLocked = orgFeatures ? orgFeatures.custom_branding === false : false;
 
   async function handleLogoUpload(e) {
     const file = e.target.files?.[0];
@@ -66,34 +70,62 @@ export default function Settings({ profile, org, onSaved }) {
       </div>
 
       <div style={{ maxWidth: 480, background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 10, padding: 24 }}>
-        <label>Agency / Business name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Demo Realty" style={{ marginBottom: 18 }} />
+        {brandingLocked ? (
+          <div
+            style={{
+              background: "var(--stone)",
+              border: "1px dashed var(--line)",
+              borderRadius: 8,
+              padding: 20,
+              marginBottom: 20,
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Custom branding is a Professional feature</div>
+            <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 14 }}>
+              Add your own business name and logo to your public page by upgrading your plan.
+              Right now your customers see a default, unbranded page.
+            </div>
+            <button
+              type="button"
+              className="btn btn-brass"
+              onClick={() => window.open("https://wa.me/923340159006?text=" + encodeURIComponent("I'd like to upgrade to the Professional plan"), "_blank")}
+            >
+              Upgrade to Professional
+            </button>
+          </div>
+        ) : (
+          <>
+            <label>Agency / Business name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Demo Realty" style={{ marginBottom: 18 }} />
 
-        <label>Logo (max 2MB)</label>
-        <div style={{ marginBottom: 8 }}>
-          {logoUrl ? (
-            <>
-              <img src={logoUrl} alt="Logo preview" style={{ maxHeight: 60, maxWidth: 220, objectFit: "contain", marginBottom: 10, display: "block" }} />
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ border: "none", color: "var(--rust)", cursor: "pointer", background: "none", fontSize: 12, padding: 0, marginBottom: 10 }}
-                onClick={() => setLogoUrl("")}
-              >
-                Remove logo
-              </button>
-            </>
-          ) : (
-            <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 10 }}>No logo uploaded yet</div>
-          )}
-          <input type="file" accept="image/*" onChange={handleLogoUpload} />
-          {uploading && <div style={{ fontSize: 12, color: "var(--slate)", marginTop: 6 }}>Uploading…</div>}
-        </div>
+            <label>Logo (max 2MB)</label>
+            <div style={{ marginBottom: 8 }}>
+              {logoUrl ? (
+                <>
+                  <img src={logoUrl} alt="Logo preview" style={{ maxHeight: 60, maxWidth: 220, objectFit: "contain", marginBottom: 10, display: "block" }} />
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    style={{ border: "none", color: "var(--rust)", cursor: "pointer", background: "none", fontSize: 12, padding: 0, marginBottom: 10 }}
+                    onClick={() => setLogoUrl("")}
+                  >
+                    Remove logo
+                  </button>
+                </>
+              ) : (
+                <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 10 }}>No logo uploaded yet</div>
+              )}
+              <input type="file" accept="image/*" onChange={handleLogoUpload} />
+              {uploading && <div style={{ fontSize: 12, color: "var(--slate)", marginTop: 6 }}>Uploading…</div>}
+            </div>
 
-        <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 20 }}>
-          This name and logo will show in your admin dashboard sidebar and on your public
-          customer-facing page — everywhere your business appears.
-        </div>
+            <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 20 }}>
+              This name and logo will show in your admin dashboard sidebar and on your public
+              customer-facing page — everywhere your business appears.
+            </div>
+          </>
+        )}
 
         <label>Owner / Agent name (shown on property cards)</label>
         <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="e.g. Sweets or Agents" style={{ marginBottom: 18 }} />

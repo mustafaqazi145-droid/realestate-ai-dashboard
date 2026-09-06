@@ -78,6 +78,7 @@ export default function UpgradeModal({ orgName, onClose }) {
       <div
         style={{
           background: "var(--paper)",
+          color: "var(--ink)",
           borderRadius: 12,
           padding: 28,
           maxWidth: 780,

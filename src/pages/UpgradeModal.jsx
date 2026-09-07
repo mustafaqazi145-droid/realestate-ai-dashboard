@@ -105,17 +105,41 @@ export default function UpgradeModal({ orgName, onClose }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 16 }}>
             {["starter", "pro", "enterprise"].map((planKey) => {
               const p = pricing?.[planKey];
+              const isRecommended = planKey === "pro";
               return (
                 <div
                   key={planKey}
                   style={{
-                    border: "1px solid var(--line)",
+                    position: "relative",
+                    border: isRecommended ? "2px solid var(--brass, #b8863b)" : "1px solid var(--line)",
                     borderRadius: 10,
                     padding: 18,
+                    paddingTop: isRecommended ? 26 : 18,
                     display: "flex",
                     flexDirection: "column",
+                    boxShadow: isRecommended ? "0 4px 16px rgba(184, 134, 59, 0.18)" : "none",
+                    transform: isRecommended ? "scale(1.03)" : "none",
                   }}
                 >
+                  {isRecommended && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: -1,
+                        left: -1,
+                        background: "var(--brass, #b8863b)",
+                        color: "#fff",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.05em",
+                        textTransform: "uppercase",
+                        padding: "4px 10px",
+                        borderRadius: "9px 0 9px 0",
+                      }}
+                    >
+                      Recommended
+                    </div>
+                  )}
                   <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>{PLAN_LABELS[planKey]}</div>
 
                   {p ? (

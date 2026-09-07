@@ -21,7 +21,7 @@ const PLAN_FEATURES = {
     "Leads dashboard",
     "WhatsApp direct-reach for buyers",
     "Compare feature",
-    "Custom branding (your logo & name)",
+    "No custom branding",
   ],
   enterprise: [
     "Up to 50 properties",
@@ -29,7 +29,7 @@ const PLAN_FEATURES = {
     "Leads dashboard",
     "WhatsApp direct-reach for buyers",
     "Compare feature",
-    "Custom branding (your logo & name)",
+    "Custom branding (your logo & name) — Enterprise exclusive",
   ],
 };
 

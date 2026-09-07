@@ -38,34 +38,88 @@ const icons = {
 };
 export default function Sidebar({ profile, org }) {
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {
     await supabase.auth.signOut();
   }
   return (
-    <div className="sidebar">
+    <>
+      <style>{`
+        .mobile-menu-toggle { display: none; }
+        .sidebar-backdrop { display: none; }
+        @media (max-width: 860px) {
+          .mobile-menu-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--ink, #14161a);
+            color: #fff;
+            border: none;
+            z-index: 1001;
+            cursor: pointer;
+            font-size: 18px;
+          }
+          .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            z-index: 1000;
+            overflow-y: auto;
+          }
+          .sidebar.mobile-open { transform: translateX(0); }
+          .sidebar-backdrop.visible {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 999;
+          }
+        }
+      `}</style>
+
+      <button
+        className="mobile-menu-toggle"
+        onClick={() => setMobileOpen((v) => !v)}
+        aria-label={mobileOpen ? "Close menu" : "Open menu"}
+      >
+        {mobileOpen ? "✕" : "☰"}
+      </button>
+
+      <div className={`sidebar-backdrop${mobileOpen ? " visible" : ""}`} onClick={() => setMobileOpen(false)} />
+
+      <div className={`sidebar${mobileOpen ? " mobile-open" : ""}`}>
       {org?.logo_url ? (
         <img src={org.logo_url} alt={org?.name || "Logo"} style={{ maxHeight: 32, maxWidth: 160, marginBottom: 4, objectFit: "contain" }} />
       ) : (
         <div className="brand">{org?.name || "Property Console"}</div>
       )}
       <div className="brand-sub">Agent Workspace</div>
-      <NavLink to="/" end className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+      <NavLink to="/" end onClick={() => setMobileOpen(false)} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
         {icons.overview} Overview
       </NavLink>
-      <NavLink to="/properties" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+      <NavLink to="/properties" onClick={() => setMobileOpen(false)} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
         {icons.properties} Properties
       </NavLink>
-      <NavLink to="/leads" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+      <NavLink to="/leads" onClick={() => setMobileOpen(false)} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
         {icons.leads} Leads
       </NavLink>
-      <NavLink to="/viewings" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+      <NavLink to="/viewings" onClick={() => setMobileOpen(false)} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
         {icons.viewings} Viewings
       </NavLink>
-      <NavLink to="/import" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+      <NavLink to="/import" onClick={() => setMobileOpen(false)} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
         {icons.import} Import
       </NavLink>
-      <NavLink to="/settings" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+      <NavLink to="/settings" onClick={() => setMobileOpen(false)} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
         {icons.settings} Settings
       </NavLink>
       <div className="sidebar-footer">
@@ -75,6 +129,7 @@ export default function Sidebar({ profile, org }) {
       </div>
 
       {showUpgrade && <UpgradeModal orgName={org?.name} onClose={() => setShowUpgrade(false)} />}
-    </div>
+      </div>
+    </>
   );
 }

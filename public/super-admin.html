@@ -151,6 +151,14 @@
 
     <section>
       <h2>All Organizations</h2>
+      <input
+        type="text"
+        id="org-search"
+        class="inline"
+        placeholder="Search by email, owner name, or organization name…"
+        style="width: 100%; margin-bottom: 14px; padding: 10px; box-sizing: border-box;"
+        oninput="filterOrgs(this.value)"
+      />
       <table>
         <thead>
           <tr>
@@ -284,17 +292,9 @@
       return `<span class="badge badge-active">Active</span>`;
     }
 
-    async function loadOrgs() {
-      const { data: orgs, error } = await supabase
-        .from("organizations")
-        .select("*, profiles(id, full_name, email, role)")
-        .order("created_at", { ascending: false });
+    let allOrgs = [];
 
-      if (error) {
-        console.error(error);
-        return;
-      }
-
+    function renderOrgRows(orgs) {
       const tbody = document.getElementById("orgs-tbody");
       tbody.innerHTML = orgs.map((o) => {
         const owner = (o.profiles || []).find((p) => p.role === "admin") || (o.profiles || [])[0];
@@ -325,7 +325,43 @@
           </td>
         </tr>
       `;
-      }).join("");
+      }).join("") || `<tr><td colspan="7" class="status-msg">No organizations match your search.</td></tr>`;
+    }
+
+    window.filterOrgs = function (query) {
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        renderOrgRows(allOrgs);
+        return;
+      }
+      const filtered = allOrgs.filter((o) => {
+        const owner = (o.profiles || []).find((p) => p.role === "admin") || (o.profiles || [])[0];
+        const haystack = [
+          o.name, o.slug, owner?.email, owner?.full_name,
+        ].filter(Boolean).join(" ").toLowerCase();
+        return haystack.includes(q);
+      });
+      renderOrgRows(filtered);
+    };
+
+    async function loadOrgs() {
+      const { data: orgs, error } = await supabase
+        .from("organizations")
+        .select("*, profiles(id, full_name, email, role)")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      allOrgs = orgs;
+      const searchEl = document.getElementById("org-search");
+      renderOrgRows(searchEl && searchEl.value ? allOrgs.filter((o) => {
+        const owner = (o.profiles || []).find((p) => p.role === "admin") || (o.profiles || [])[0];
+        const haystack = [o.name, o.slug, owner?.email, owner?.full_name].filter(Boolean).join(" ").toLowerCase();
+        return haystack.includes(searchEl.value.trim().toLowerCase());
+      }) : allOrgs);
 
       const linkOrgSelect = document.getElementById("link-org");
       linkOrgSelect.innerHTML = orgs.map((o) => `<option value="${o.id}">${escapeHtml(o.name)}</option>`).join("");

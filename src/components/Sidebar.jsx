@@ -55,7 +55,7 @@ export default function Sidebar({ profile, org }) {
             justify-content: center;
             position: fixed;
             top: 14px;
-            left: 14px;
+            right: 14px;
             width: 40px;
             height: 40px;
             border-radius: 8px;

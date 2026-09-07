@@ -24,7 +24,7 @@ const PLAN_FEATURES = {
     "Custom branding (your logo & name)",
   ],
   enterprise: [
-    "Unlimited properties",
+    "Up to 50 properties",
     "AI chat search",
     "Leads dashboard",
     "WhatsApp direct-reach for buyers",

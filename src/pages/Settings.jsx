@@ -88,7 +88,7 @@ export default function Settings({ profile, org, orgFeatures, onSaved }) {
               textAlign: "center",
             }}
           >
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>Custom branding is a Professional feature</div>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Custom branding is an Enterprise feature</div>
             <div style={{ fontSize: 12, color: "var(--slate)", marginBottom: 14 }}>
               Add your own business name and logo to your public page by upgrading your plan.
               Right now your customers see a default, unbranded page.
@@ -98,7 +98,7 @@ export default function Settings({ profile, org, orgFeatures, onSaved }) {
               className="btn btn-brass"
               onClick={() => setShowUpgrade(true)}
             >
-              Upgrade to Professional
+              Upgrade to Enterprise
             </button>
           </div>
         ) : (

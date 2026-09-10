@@ -110,8 +110,9 @@
       border: 1px solid ${CONFIG.accent}; background: transparent; color: ${CONFIG.accent}; cursor: pointer;
     }
     .aiw-view-link {
-      display: block; text-align: center; margin-top: 8px; font-size: 11px; color: #6b7280;
+      display: block; width: 100%; text-align: center; margin-top: 8px; font-size: 11px; color: #6b7280;
       text-decoration: none; border: 1px solid #e5e4de; border-radius: 6px; padding: 6px 0;
+      background: none; cursor: pointer; font-family: inherit;
     }
     .aiw-view-link:hover { border-color: ${CONFIG.accent}; color: ${CONFIG.accent}; }
     .aiw-prop-photo { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
@@ -241,11 +242,28 @@
         ${featuresLine}
         <div class="price">${escapeHtml(p.currency)} ${Number(p.price).toLocaleString()}</div>
         <button data-id="${escapeHtml(p.id)}" data-code="${escapeHtml(p.property_code)}">Request a viewing</button>
-        <a class="aiw-view-link" href="${escapeHtml(CONFIG.listingPageUrl)}?property=${encodeURIComponent(p.property_code)}">View full property details →</a>
+        <button class="aiw-view-link" data-view-id="${escapeHtml(p.id)}" data-view-code="${escapeHtml(p.property_code)}">View full property details →</button>
       `;
-      card.querySelector("button").addEventListener("click", () => {
+      card.querySelector("button[data-id]").addEventListener("click", () => {
         lastMatchedProperty = p;
         showLeadForm();
+      });
+      card.querySelector(".aiw-view-link").addEventListener("click", () => {
+        const photoEl = document.getElementById(`photo-${p.id}`);
+        const listingCard = photoEl ? photoEl.closest(".plot-card") : null;
+        if (listingCard) {
+          // Already on the listing page and this property is currently
+          // rendered — just close the chat and scroll to it. No navigation.
+          panel.classList.remove("open");
+          listingCard.classList.add("highlighted");
+          listingCard.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => listingCard.classList.remove("highlighted"), 3000);
+        } else if (typeof window.__aiwFocusProperty === "function") {
+          // Property isn't in the currently rendered grid (e.g. a related
+          // suggestion) — let the host page re-filter to it in place.
+          panel.classList.remove("open");
+          window.__aiwFocusProperty(p.property_code);
+        }
       });
       messagesEl.appendChild(card);
     });

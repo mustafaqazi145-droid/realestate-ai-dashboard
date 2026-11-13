@@ -176,8 +176,18 @@
     const SUPABASE_URL = "https://wduuigczfxotwuotafvl.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXVpZ2N6ZnhvdHd1b3RhZnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzY4MTAsImV4cCI6MjEwMDcxMjgxMH0.vr0aVliwvnNMSOG3u2gF859uClklUrRc1pBSm3ZgyQQ";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // The client dashboard uses Supabase's default storage key. This panel
+    // uses its own key so that opening a client's dashboard ("Open as Client")
+    // never signs the super admin out of this panel.
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { storageKey: "sb-superadmin-auth" },
+    });
     window.supabase = supabase;
+
+    // Where the client's own dashboard lives (the page clients log in to).
+    // Must also be listed in Supabase → Authentication → URL Configuration
+    // → Redirect URLs.
+    const DASHBOARD_URL = "https://realestate-ai-dashboard.mustafaqazi145.workers.dev/";
 
     // The customer-facing widget template now lives in its own file
     // (public/widget-template.html) instead of being embedded here as
@@ -245,6 +255,34 @@
         btnEl.textContent = "Failed";
       } finally {
         setTimeout(() => { btnEl.textContent = original; btnEl.disabled = false; }, 2000);
+      }
+    };
+
+    // Opens the client's dashboard already signed in as that organization's
+    // admin, so you can set things up for them. The client's own login keeps
+    // working as usual. Needs the "impersonate" Edge Function (super admins only).
+    window.openAsClient = async function (orgId, btnEl) {
+      if (!confirm("Open this client's dashboard signed in as their admin?")) return;
+      const original = btnEl.textContent;
+      btnEl.textContent = "Opening…";
+      btnEl.disabled = true;
+      // Open the tab right away (inside the click) so popup blockers allow it.
+      const win = window.open("", "_blank");
+      try {
+        const { data, error } = await supabase.functions.invoke("impersonate", {
+          body: { orgId, redirectTo: DASHBOARD_URL },
+        });
+        if (error) throw error;
+        if (!data?.url) throw new Error(data?.error || "No link returned");
+        if (win) win.location.href = data.url;
+        else window.location.href = data.url;
+      } catch (e) {
+        console.error("[openAsClient] failed", e);
+        if (win) win.close();
+        alert("Couldn't open the client's dashboard: " + (e?.message || e));
+      } finally {
+        btnEl.textContent = original;
+        btnEl.disabled = false;
       }
     };
 
@@ -326,6 +364,7 @@
           <td>${statusBadge(o)}</td>
           <td class="mono">${new Date(o.created_at).toLocaleDateString()}</td>
           <td style="white-space:nowrap;">
+            <button class="btn btn-sm" onclick="openAsClient('${o.id}', this)">Open as Client</button>
             <button class="btn btn-sm" onclick="uploadWidget('${o.id}', '${escapeHtml(o.slug)}', this)">Get Link</button>
             <button class="btn btn-ghost btn-sm" onclick="downloadWidget('${o.id}', '${escapeHtml(o.slug)}')">Download</button>
             <button class="btn btn-ghost btn-sm" onclick="copyOrgId('${o.id}', this)">Copy ID</button>

@@ -221,6 +221,16 @@
   }
   .share-btn:hover { border-color: var(--brass); color: var(--brass-dark); }
   .share-btn.whatsapp:hover { border-color: #2f6f4f; color: #2f6f4f; }
+  .share-btn.viewing { border-color: var(--brass); color: var(--brass-dark); font-weight: 600; }
+  .share-btn.viewing:hover { background: var(--brass); color: #fff; }
+  .vw-row { display: flex; gap: 8px; }
+  .vw-row > div { flex: 1; min-width: 0; }
+  .wa-lead-modal label.vw-label { display: block; font-size: 10px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.05em; margin: 4px 0 3px; font-family: "IBM Plex Mono", monospace; }
+  .wa-lead-modal select.vw-select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; margin-bottom: 6px; background: #fff; font-family: "Inter", sans-serif; }
+  .vw-submit-btn { background: var(--brass); color: #fff; }
+  .vw-submit-btn:disabled { opacity: 0.6; cursor: default; }
+  .vw-success { text-align: center; padding: 8px 0; }
+  .vw-success .vw-tick { font-size: 34px; color: var(--ledger); margin-bottom: 6px; }
   .owner-contact {
     background: var(--stone); border-radius: 4px; padding: 8px 10px; margin: 8px 0; font-size: 11px;
   }
@@ -729,18 +739,113 @@
       window.open(waUrl, "_blank");
     }
 
-    function copyLink(id) {
+    function requestViewing(id) {
       const p = propertyCache[id];
       if (!p) return;
-      const text = `${p.title} (${p.property_code}) — ${p.currency} ${Number(p.price).toLocaleString()} — ${window.location.href.split("?")[0]}`;
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = document.getElementById(`copy-${id}`);
-        if (btn) {
-          const original = btn.textContent;
-          btn.textContent = "Copied!";
-          setTimeout(() => { btn.textContent = original; }, 1500);
-        }
-      });
+
+      const today = new Date().toISOString().split("T")[0];
+      const container = document.getElementById("compare-overlay-container");
+      container.innerHTML = `
+        <div class="wa-lead-overlay" onclick="closeViewingForm(event)">
+          <div class="wa-lead-modal" id="vw-modal" onclick="event.stopPropagation()">
+            <h3>Request a viewing</h3>
+            <p>Pick a time for ${escapeHtml(p.property_code)} — ${escapeHtml(p.title)}. Our consultant will confirm with you directly.</p>
+            <input type="text" id="vw-name" placeholder="Your name" />
+            <input type="tel" id="vw-phone" placeholder="Phone number (e.g. 03001234567)" />
+            <div class="wa-field-error" id="vw-phone-error">Enter a valid phone number — 11 digits (e.g. 03001234567) or with country code (e.g. +923001234567).</div>
+            <div class="vw-row">
+              <div>
+                <label class="vw-label" for="vw-date">Preferred date</label>
+                <input type="date" id="vw-date" min="${today}" />
+              </div>
+              <div>
+                <label class="vw-label" for="vw-time">Preferred time</label>
+                <select id="vw-time" class="vw-select">
+                  <option value="">Any time</option>
+                  <option value="Morning (9am–12pm)">Morning (9am–12pm)</option>
+                  <option value="Afternoon (12pm–4pm)">Afternoon (12pm–4pm)</option>
+                  <option value="Evening (4pm–7pm)">Evening (4pm–7pm)</option>
+                </select>
+              </div>
+            </div>
+            <div class="wa-field-error" id="vw-submit-error">Couldn't send your request. Please try again.</div>
+            <div class="wa-lead-actions">
+              <button class="wa-cancel-btn" onclick="closeViewingForm(event)">Cancel</button>
+              <button class="vw-submit-btn" id="vw-submit" onclick="submitViewingRequest('${id}')">Request Viewing</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeViewingForm(e) {
+      if (e) e.preventDefault();
+      document.getElementById("compare-overlay-container").innerHTML = "";
+    }
+
+    async function submitViewingRequest(id) {
+      const p = propertyCache[id];
+      if (!p) return;
+      const nameEl = document.getElementById("vw-name");
+      const phoneEl = document.getElementById("vw-phone");
+      const phoneErr = document.getElementById("vw-phone-error");
+      const submitErr = document.getElementById("vw-submit-error");
+      const btn = document.getElementById("vw-submit");
+      const name = nameEl.value.trim();
+      const phone = phoneEl.value.trim();
+      const date = document.getElementById("vw-date").value;
+      const time = document.getElementById("vw-time").value;
+
+      submitErr.style.display = "none";
+      if (!phone || !isValidPhone(phone)) {
+        phoneEl.classList.add("invalid");
+        phoneErr.style.display = "block";
+        phoneEl.focus();
+        return;
+      }
+      phoneEl.classList.remove("invalid");
+      phoneErr.style.display = "none";
+
+      const when = [date, time].filter(Boolean).join(", ");
+      const summary = `Requested a viewing for ${p.property_code} — ${p.title}` +
+        (when ? `. Preferred time: ${when}.` : ". No preferred time given.") +
+        " Submitted from public listing page.";
+
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_submit_lead`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            p_org_id: ORG_ID,
+            p_name: name || null,
+            p_phone: phone,
+            p_property_interested_id: p.id,
+            p_conversation_summary: summary,
+          }),
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+      } catch (e) {
+        console.error("[Viewing request] submission failed", e);
+        submitErr.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Request Viewing";
+        return;
+      }
+
+      document.getElementById("vw-modal").innerHTML = `
+        <div class="vw-success">
+          <div class="vw-tick">✓</div>
+          <h3>Viewing requested</h3>
+          <p>Thanks${name ? ", " + escapeHtml(name) : ""}! A consultant will contact you shortly to confirm your viewing of ${escapeHtml(p.property_code)}.</p>
+          <div class="wa-lead-actions"><button class="wa-continue-btn" onclick="closeViewingForm(event)">Done</button></div>
+        </div>
+      `;
     }
 
     function toggleCompare(id) {
@@ -955,7 +1060,7 @@
             ` : ""}
             <div class="card-share-row">
               <button class="share-btn whatsapp" onclick="shareWhatsApp('${p.id}')">WhatsApp</button>
-              <button class="share-btn" id="copy-${p.id}" onclick="copyLink('${p.id}')">Copy Link</button>
+              <button class="share-btn viewing" onclick="requestViewing('${p.id}')">Request Viewing</button>
             </div>
           </div>
         </div>

@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aamir Nazir Real-State Agent  — Verified Property Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --ink: #14161a;
+    --paper: #ffffff;
+    --stone: #eef0ec;
+    --brass: #b8863b;
+    --brass-dark: #96692b;
+    --ledger: #2f6f4f;
+    --rust: #a6402f;
+    --slate: #6b7280;
+    --line: #d9d8d0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--stone);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+  h1, h2, .display { font-family: "Fraunces", Georgia, serif; font-weight: 500; margin: 0; letter-spacing: -0.01em; }
+
+  nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 22px 6vw; position: relative; z-index: 10;
+  }
+  .logo { font-family: "Fraunces", serif; font-size: 19px; opacity: 0; transition: opacity 0.2s ease; }
+  .logo-sub { font-family: "IBM Plex Mono", monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass-dark); opacity: 0; transition: opacity 0.2s ease; }
+  .logo.ready, .logo-sub.ready { opacity: 1; }
+  .nav-links { display: flex; gap: 28px; font-size: 13px; color: var(--slate); }
+  .nav-links a { color: inherit; text-decoration: none; }
+
+  .hero { position: relative; padding: 8vh 6vw 10vh; overflow: hidden; }
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px; opacity: 0.55;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black 40%, transparent 100%);
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 720px; }
+  .hero .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--brass-dark); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .hero .eyebrow::before { content: ""; width: 16px; height: 1px; background: var(--brass-dark); display: inline-block; }
+  .hero h1 { font-size: clamp(34px, 5.5vw, 58px); line-height: 1.05; margin-bottom: 20px; }
+  .hero h1 em { font-style: italic; color: var(--brass-dark); }
+  .hero p.sub { font-size: 16px; color: var(--slate); max-width: 480px; margin-bottom: 32px; line-height: 1.6; }
+
+  .cta-row { display: flex; gap: 14px; align-items: center; }
+  .btn-primary {
+    background: var(--ink); color: #fff; border: none; padding: 13px 26px; border-radius: 4px;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: "Inter", sans-serif;
+  }
+  .btn-primary:hover { background: #000; }
+  .cta-hint { font-size: 12px; color: var(--slate); }
+
+  .hero-stats { display: flex; gap: 40px; margin-top: 56px; }
+  .hero-stats .stat-num { font-family: "IBM Plex Mono", monospace; font-size: 26px; color: var(--ink); }
+  .hero-stats .stat-label { font-size: 11px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+  .how-it-works { padding: 2vh 6vw 6vh; }
+  .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 24px; }
+  .how-step {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 22px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .how-step:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(20,22,26,0.06); }
+  .how-step .how-num {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--brass-dark);
+    border: 1px solid var(--brass); border-radius: 50%; width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+  }
+  .how-step h3 { font-size: 15px; font-family: "Fraunces", serif; margin-bottom: 6px; }
+  .how-step p { font-size: 13px; color: var(--slate); line-height: 1.5; margin: 0; }
+
+  .listings { padding: 4vh 6vw 10vh; }
+  .listings-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  .listings-head .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); margin-bottom: 6px; }
+  .listings-head h2 { font-size: 28px; }
+
+  .filter-bar {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; margin-bottom: 26px;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .filter-field label {
+    font-family: "IBM Plex Mono", monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--slate);
+  }
+  .filter-field input, .filter-field select {
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; font-family: "Inter", sans-serif;
+    font-size: 13px; background: #fff; width: 100%; min-width: 0;
+  }
+  .filter-field.price-pair { grid-column: span 2; flex-direction: row; gap: 8px; }
+  .filter-field.price-pair > div { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+  .filter-actions { display: flex; gap: 8px; align-items: flex-end; }
+  .btn-filter {
+    background: var(--brass); color: #fff; border: none; padding: 9px 16px; border-radius: 4px;
+    font-size: 13px; font-weight: 600; cursor: pointer; flex: 1;
+  }
+  .btn-filter:hover { background: var(--brass-dark); }
+  .btn-clear {
+    background: transparent; border: 1px solid var(--line); color: var(--slate); padding: 9px 14px;
+    border-radius: 4px; font-size: 13px; cursor: pointer; flex: 1;
+  }
+  @media (max-width: 640px) {
+    .filter-bar { grid-template-columns: 1fr 1fr; padding: 12px; }
+    .filter-field.price-pair { grid-column: span 2; }
+    .filter-actions { grid-column: span 2; }
+  }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px; }
+
+  .plot-card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s; animation: fadeInUp 0.4s ease both;
+  }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .plot-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(20,22,26,0.08); }
+  .plot-photo { height: 230px; background: linear-gradient(135deg, #e3e1d7, #f3f2ec); position: relative; overflow: hidden; transition: overflow 0.2s; cursor: zoom-in; }
+  .plot-photo:hover { overflow: visible; }
+  .plot-card { position: relative; }
+  .plot-card:hover { z-index: 40; }
+  .plot-photo .status-pin {
+    position: absolute; top: 10px; left: 10px; font-family: "IBM Plex Mono", monospace; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px; border-radius: 3px; background: rgba(255,255,255,0.92);
+    color: var(--ledger);
+  }
+  .plot-body { padding: 18px; }
+  .plot-code { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--slate); letter-spacing: 0.05em; }
+  .plot-title { font-size: 16px; margin: 4px 0 6px; font-family: "Fraunces", serif; }
+  .plot-loc { font-size: 12px; color: var(--slate); margin-bottom: 12px; }
+
+  .plot-dims {
+    display: flex; gap: 0; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink);
+    border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); padding: 8px 0; margin-bottom: 12px;
+  }
+  .plot-dims span { flex: 1; text-align: center; border-right: 1px dashed var(--line); }
+  .plot-dims span:last-child { border-right: none; }
+  .plot-dims .dim-label { display: block; font-size: 8px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+  .plot-price { display: flex; justify-content: space-between; align-items: baseline; }
+  .plot-price .amount { font-family: "IBM Plex Mono", monospace; font-size: 18px; font-weight: 500; }
+  .plot-price .cur { font-size: 10px; color: var(--slate); margin-right: 4px; }
+
+  .empty-note { color: var(--slate); font-size: 13px; padding: 40px 0; text-align: center; }
+
+  /* Plan-based feature gating — toggled via body classes set from
+     public_get_org_features() at load time. */
+  body.hide-whatsapp .share-btn.whatsapp { display: none !important; }
+  body.hide-compare .compare-check,
+  body.hide-compare .compare-bar { display: none !important; }
+
+  .compare-check {
+    position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(255,255,255,0.92);
+    border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; gap: 5px;
+    font-size: 10px; color: var(--ink); font-family: "IBM Plex Mono", monospace;
+  }
+  .compare-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--ink); color: #fff;
+    padding: 14px 6vw; display: flex; justify-content: space-between; align-items: center;
+    z-index: 500; transform: translateY(100%); transition: transform 0.25s ease;
+  }
+  .compare-bar.visible { transform: translateY(0); }
+  .compare-bar .cb-text { font-size: 13px; }
+  .compare-bar .cb-actions { display: flex; gap: 10px; }
+  .compare-bar button { border: none; padding: 9px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 600; }
+  .cb-compare-btn { background: var(--brass); color: #fff; }
+  .cb-clear-btn { background: transparent; color: #cfcdc4; border: 1px solid #3a3c3f !important; }
+
+  .compare-overlay {
+    position: fixed; inset: 0; background: rgba(20,22,26,0.55); z-index: 1000;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .compare-modal { background: #fff; border-radius: 10px; max-width: 900px; width: 100%; max-height: 85vh; overflow: auto; padding: 24px; }
+  .compare-modal h2 { font-size: 20px; margin-bottom: 16px; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .compare-table th, .compare-table td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+  .compare-table th { background: var(--stone); font-family: "IBM Plex Mono", monospace; font-size: 10px; text-transform: uppercase; color: var(--slate); }
+  .compare-table .row-label { font-weight: 600; background: var(--stone); font-size: 12px; }
+  .compare-close { margin-top: 16px; }
+  @media (max-width: 640px) {
+    .compare-bar { flex-direction: column; gap: 10px; align-items: stretch; text-align: center; }
+    .compare-table { font-size: 11px; }
+  }
+
+  footer { padding: 28px 6vw; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 12px; color: var(--slate); }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .hero-stats { gap: 24px; flex-wrap: wrap; }
+  }
+
+  .type-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .type-chip {
+    background: var(--paper); border: 1px solid var(--line); padding: 8px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+    font-family: "Inter", sans-serif; color: var(--ink);
+  }
+  .type-chip:hover { border-color: var(--brass); color: var(--brass-dark); }
+  .type-chip.active { background: var(--brass); border-color: var(--brass); color: #fff; }
+
+  /* ---------- Favorite + Share ---------- */
+  .fav-btn {
+    position: absolute; top: 46px; left: 10px; z-index: 2; background: rgba(255,255,255,0.92);
+    border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fav-btn.active { color: var(--rust); }
+  .card-share-row { display: flex; gap: 6px; margin-top: 10px; }
+  .share-btn {
+    flex: 1; border: 1px solid var(--line); background: transparent; padding: 6px 0; border-radius: 4px;
+    font-size: 11px; cursor: pointer; color: var(--slate); font-family: "Inter", sans-serif;
+  }
+  .share-btn:hover { border-color: var(--brass); color: var(--brass-dark); }
+  .share-btn.whatsapp:hover { border-color: #2f6f4f; color: #2f6f4f; }
+  .share-btn.viewing { border-color: var(--brass); color: var(--brass-dark); font-weight: 600; }
+  .share-btn.viewing:hover { background: var(--brass); color: #fff; }
+  .vw-row { display: flex; gap: 8px; }
+  .vw-row > div { flex: 1; min-width: 0; }
+  .wa-lead-modal label.vw-label { display: block; font-size: 10px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.05em; margin: 4px 0 3px; font-family: "IBM Plex Mono", monospace; }
+  .wa-lead-modal select.vw-select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; margin-bottom: 6px; background: #fff; font-family: "Inter", sans-serif; }
+  .vw-submit-btn { background: var(--brass); color: #fff; }
+  .vw-submit-btn:disabled { opacity: 0.6; cursor: default; }
+  .vw-success { text-align: center; padding: 8px 0; }
+  .vw-success .vw-tick { font-size: 34px; color: var(--ledger); margin-bottom: 6px; }
+  .owner-contact {
+    background: var(--stone); border-radius: 4px; padding: 8px 10px; margin: 8px 0; font-size: 11px;
+  }
+  .owner-contact .oc-label { color: var(--slate); font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .owner-contact .oc-name { font-weight: 600; }
+  .owner-contact .oc-phone { font-family: "IBM Plex Mono", monospace; color: var(--brass-dark); }
+
+  /* ---------- Photo slider ---------- */
+  .photo-slide {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none;
+    background: var(--stone); transition: transform 0.25s ease, box-shadow 0.25s ease; transform-origin: center center;
+  }
+  .plot-photo:hover .photo-slide.active {
+    transform: scale(1.7);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    border-radius: 6px;
+    z-index: 10;
+  }
+  .photo-slide.active { display: block; }
+  .slide-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); background: #fff; color: var(--ink);
+    border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 17px;
+    z-index: 12; display: flex; align-items: center; justify-content: center; line-height: 1;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25); opacity: 0; transition: opacity 0.2s ease, transform 0.15s ease;
+  }
+  .plot-photo:hover .slide-arrow { opacity: 1; }
+  .slide-arrow:hover { transform: translateY(-50%) scale(1.12); color: var(--brass-dark); }
+  .slide-arrow.prev { left: 10px; }
+  .slide-arrow.next { right: 10px; }
+  .slide-nav {
+    position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; z-index: 12;
+  }
+  .slide-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.6); cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .slide-dot.active { background: #fff; transform: scale(1.4); }
+
+  /* ---------- Direct link highlight ---------- */
+  .plot-card.highlighted {
+    outline: 3px solid var(--brass); outline-offset: 2px;
+    animation: highlightPulse 1.6s ease-in-out 2;
+  }
+  @keyframes highlightPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(184,134,59,0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(184,134,59,0); }
+  }
+  .back-to-all {
+    display: inline-block; margin-bottom: 16px; font-size: 12px; color: var(--brass-dark);
+    text-decoration: none; border: 1px solid var(--line); padding: 7px 14px; border-radius: 20px;
+  }
+  .back-to-all:hover { border-color: var(--brass); }
+
+  /* ---------- Pre-WhatsApp lead capture ---------- */
+  .wa-lead-overlay {
+    position: fixed; inset: 0; background: rgba(20,22,26,0.55); z-index: 1100;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .wa-lead-modal { background: #fff; border-radius: 10px; max-width: 380px; width: 100%; padding: 24px; }
+  .wa-lead-modal h3 { font-size: 17px; margin-bottom: 6px; font-family: "Fraunces", serif; }
+  .wa-lead-modal p { font-size: 12px; color: var(--slate); margin-bottom: 16px; }
+  .wa-lead-modal input {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px;
+    font-size: 13px; margin-bottom: 6px; box-sizing: border-box; font-family: "Inter", sans-serif;
+  }
+  .wa-lead-modal input.invalid { border-color: var(--rust); }
+  .wa-field-error { font-size: 11px; color: var(--rust); margin-bottom: 10px; display: none; }
+  .wa-lead-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .wa-lead-actions button {
+    flex: 1; padding: 10px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-weight: 600;
+  }
+  .wa-continue-btn { background: #2f6f4f; color: #fff; }
+  .wa-cancel-btn { background: transparent; border: 1px solid var(--line) !important; color: var(--slate); }
+
+  /* ---------- Full-screen lightbox (works on mobile too, unlike hover) ---------- */
+  .lightbox-overlay {
+    position: fixed; inset: 0; background: rgba(10,11,13,0.94); z-index: 2000;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .lightbox-img-wrap { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; min-height: 0; }
+  .lightbox-img { max-width: 92vw; max-height: 78vh; object-fit: contain; border-radius: 4px; }
+  .lightbox-close {
+    position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.12); color: #fff;
+    border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 22px; cursor: pointer; z-index: 2;
+  }
+  .lightbox-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.12); color: #fff;
+    border: none; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox-arrow:hover { background: rgba(255,255,255,0.25); }
+  .lightbox-arrow.prev { left: 16px; }
+  .lightbox-arrow.next { right: 16px; }
+  .lightbox-counter {
+    color: rgba(255,255,255,0.75); font-family: "IBM Plex Mono", monospace; font-size: 12px; padding-bottom: 18px;
+  }
+  .lightbox-thumbs { display: flex; gap: 6px; padding-bottom: 16px; overflow-x: auto; max-width: 90vw; }
+  .lightbox-thumb {
+    width: 48px; height: 36px; object-fit: cover; border-radius: 3px; cursor: pointer; opacity: 0.5; flex-shrink: 0;
+    border: 2px solid transparent;
+  }
+  .lightbox-thumb.active { opacity: 1; border-color: var(--brass); }
+  @media (max-width: 640px) {
+    .lightbox-arrow { width: 40px; height: 40px; font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+  <nav>
+    <div>
+      <div class="logo"></div>
+      <div class="logo-sub">Verified Property Intelligence</div>
+    </div>
+    <div class="nav-links">
+      <a href="#listings">Listings</a>
+      <a href="#" onclick="return false;">Sell With Us</a>
+      <a href="#" onclick="return false;">Contact</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="eyebrow">Every listing, verified against live records</div>
+      <h1>Find your next address, <em>not a guess</em>.</h1>
+      <p class="sub">
+        Ask in plain language — size, area, budget — and get matches pulled straight from
+        our current inventory. No outdated listings, no invented prices.
+      </p>
+      <div class="cta-row">
+        <button class="btn-primary" onclick="document.querySelector('.aiw-bubble')?.click()">Ask our AI assistant</button>
+        <span class="cta-hint">or click the chat icon, bottom right</span>
+      </div>
+      <div class="hero-stats" id="hero-stats">
+        <div><div class="stat-num mono">—</div><div class="stat-label">Verified listings</div></div>
+        <div><div class="stat-num mono">Live</div><div class="stat-label">Price & status sync</div></div>
+        <div><div class="stat-num mono">24/7</div><div class="stat-label">AI response time</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <div class="eyebrow">Simple by design</div>
+    <h2 style="font-size: 26px;">How it works</h2>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <h3>Tell us what you need</h3>
+        <p>Type naturally — size, area, budget. No forms, no dropdowns to figure out.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <h3>Get verified matches</h3>
+        <p>Every result comes straight from our current inventory — never outdated, never invented.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <h3>Book a viewing</h3>
+        <p>Pick a time that works and a consultant confirms with you directly — no back-and-forth calls.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="listings" id="listings">
+    <div class="listings-head">
+      <div>
+        <div class="eyebrow">Current Inventory</div>
+        <h2>Browse listings</h2>
+      </div>
+    </div>
+
+    <div id="direct-link-banner" style="display:none; margin-bottom: 16px;"></div>
+
+    <div class="type-chips" id="type-chips">
+      <button class="type-chip active" data-type="" onclick="filterByType('')">All</button>
+      <button class="type-chip" data-type="house" onclick="filterByType('house')">House</button>
+      <button class="type-chip" data-type="apartment" onclick="filterByType('apartment')">Apartment</button>
+      <button class="type-chip" data-type="farmhouse" onclick="filterByType('farmhouse')">Farmhouse</button>
+      <button class="type-chip" data-type="plot" onclick="filterByType('plot')">Plot</button>
+      <button class="type-chip" data-type="land" onclick="filterByType('land')">Land</button>
+      <button class="type-chip" data-type="commercial" onclick="filterByType('commercial')">Commercial</button>
+      <button class="type-chip" id="fav-chip" onclick="showFavoritesOnly()">❤ My Favorites</button>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-field">
+        <label>City</label>
+        <input type="text" id="f-city" placeholder="e.g. Lahore" />
+      </div>
+      <div class="filter-field">
+        <label>Area</label>
+        <input type="text" id="f-area" placeholder="e.g. DHA Phase 6" />
+      </div>
+      <div class="filter-field">
+        <label>Type</label>
+        <select id="f-type">
+          <option value="">Any</option>
+          <option value="house">House</option>
+          <option value="apartment">Apartment</option>
+          <option value="farmhouse">Farmhouse</option>
+          <option value="plot">Plot</option>
+          <option value="land">Land</option>
+          <option value="commercial">Commercial</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>Purpose</label>
+        <select id="f-purpose">
+          <option value="">Any</option>
+          <option value="sale">Sale</option>
+          <option value="rent">Rent</option>
+        </select>
+      </div>
+      <div class="filter-field price-pair">
+        <div>
+          <label>Min Price</label>
+          <input type="number" id="f-min-price" placeholder="0" />
+        </div>
+        <div>
+          <label>Max Price</label>
+          <input type="number" id="f-max-price" placeholder="Any" />
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-filter" onclick="applyFilters()">Search</button>
+        <button class="btn-clear" onclick="clearFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="grid" id="listings-grid">
+      <div class="empty-note">Loading verified listings…</div>
+    </div>
+  </section>
+
+  <div class="compare-bar" id="compare-bar">
+    <div class="cb-text" id="compare-count">0 selected</div>
+    <div class="cb-actions">
+      <button class="cb-clear-btn" onclick="clearCompare()">Clear</button>
+      <button class="cb-compare-btn" onclick="showComparison()">Compare Now</button>
+    </div>
+  </div>
+
+  <div id="compare-overlay-container"></div>
+  <div id="lightbox-container"></div>
+
+  <footer>
+    <span>Demo Realty — a live demo built on your own inventory</span>
+    <span><a href="privacy.html" style="color: var(--slate);">Privacy Policy</a></span>
+  </footer>
+
+  <script>
+    const ORG_ID = "__ORG_ID__";
+    const SUPABASE_URL = "https://wduuigczfxotwuotafvl.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXVpZ2N6ZnhvdHd1b3RhZnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzY4MTAsImV4cCI6MjEwMDcxMjgxMH0.vr0aVliwvnNMSOG3u2gF859uClklUrRc1pBSm3ZgyQQ";
+
+    // --- Security: escape any dynamic text before it goes into innerHTML ---
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    const propertyCache = {};
+    const compareSelected = new Set();
+    const MAX_COMPARE = 3;
+    let currentTypeFilter = "";
+    let showingFavoritesOnly = false;
+    let orgContact = { name: "", phone: "" };
+
+    // Plan-based feature flags — defaults are permissive (fail open) in
+    // case the check fails, so a glitch never wrongly locks a paying
+    // customer out of a feature they should have.
+    let orgFeatures = { maxProperties: null, whatsappReach: true, customBranding: true, compareEnabled: true };
+
+    async function loadOrgFeatures() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_get_org_features`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ p_org_id: ORG_ID }),
+        });
+        const data = await res.json();
+        const f = Array.isArray(data) ? data[0] : data;
+        if (!f) return;
+
+        orgFeatures = {
+          maxProperties: f.max_properties,
+          whatsappReach: f.whatsapp_reach !== false,
+          customBranding: f.custom_branding !== false,
+          compareEnabled: f.compare_enabled !== false,
+        };
+
+        if (!orgFeatures.whatsappReach) document.body.classList.add("hide-whatsapp");
+        if (!orgFeatures.compareEnabled) document.body.classList.add("hide-compare");
+      } catch (e) {
+        console.error("[org features] failed to load, defaulting to unlocked", e);
+      }
+    }
+
+    const favorites = new Set(JSON.parse(localStorage.getItem("aiw_favorites") || "[]"));
+
+    function saveFavorites() {
+      localStorage.setItem("aiw_favorites", JSON.stringify(Array.from(favorites)));
+    }
+
+    function toggleFavorite(id) {
+      if (favorites.has(id)) {
+        favorites.delete(id);
+      } else {
+        favorites.add(id);
+      }
+      saveFavorites();
+      const btn = document.getElementById(`fav-${id}`);
+      if (btn) btn.classList.toggle("active", favorites.has(id));
+    }
+
+    function renderFavButtons() {
+      favorites.forEach((id) => {
+        const btn = document.getElementById(`fav-${id}`);
+        if (btn) btn.classList.add("active");
+      });
+    }
+
+    function showFavoritesOnly() {
+      showingFavoritesOnly = !showingFavoritesOnly;
+      document.getElementById("fav-chip").classList.toggle("active", showingFavoritesOnly);
+      const grid = document.getElementById("listings-grid");
+
+      if (!showingFavoritesOnly) {
+        loadListings();
+        return;
+      }
+
+      const favProps = Array.from(favorites).map((id) => propertyCache[id]).filter(Boolean);
+      if (favProps.length === 0) {
+        grid.innerHTML = `<div class="empty-note">No favorites saved yet — tap the heart on any listing to save it here.</div>`;
+        return;
+      }
+      grid.innerHTML = favProps.map((p, i) => renderCard(p, i)).join("");
+      renderFavButtons();
+      renderCompareChecks();
+    }
+
+    const autoplayTimers = {};
+
+    function startAutoplay(id) {
+      const container = document.getElementById(`photo-${id}`);
+      if (!container) return;
+      const total = container.querySelectorAll(".photo-slide").length;
+      if (total <= 1) return;
+      stopAutoplay(id);
+      autoplayTimers[id] = setInterval(() => {
+        const current = parseInt(container.dataset.current || "0", 10);
+        setSlideIndex(id, (current + 1) % total);
+      }, 3000);
+    }
+
+    function stopAutoplay(id) {
+      if (autoplayTimers[id]) {
+        clearInterval(autoplayTimers[id]);
+        delete autoplayTimers[id];
+      }
+    }
+
+    function setSlideIndex(id, idx) {
+      const container = document.getElementById(`photo-${id}`);
+      if (!container) return;
+      container.dataset.current = idx;
+      container.querySelectorAll(".photo-slide").forEach((img, i) => img.classList.toggle("active", i === idx));
+      container.querySelectorAll(".slide-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
+    }
+
+    function changeSlide(id, dir, e) {
+      e.stopPropagation();
+      const container = document.getElementById(`photo-${id}`);
+      if (!container) return;
+      const total = container.querySelectorAll(".photo-slide").length;
+      let current = parseInt(container.dataset.current || "0", 10);
+      current = (current + dir + total) % total;
+      setSlideIndex(id, current);
+    }
+
+    function goToSlide(id, idx, e) {
+      e.stopPropagation();
+      setSlideIndex(id, idx);
+    }
+
+    let lightboxState = { propertyId: null, index: 0 };
+
+    function openLightbox(propertyId, index, e) {
+      if (e) e.stopPropagation();
+      const p = propertyCache[propertyId];
+      if (!p || !p.images || p.images.length === 0) return;
+      lightboxState = { propertyId, index };
+      renderLightbox();
+    }
+
+    function renderLightbox() {
+      const p = propertyCache[lightboxState.propertyId];
+      if (!p) return;
+      const images = p.images;
+      const idx = lightboxState.index;
+      const container = document.getElementById("lightbox-container");
+
+      container.innerHTML = `
+        <div class="lightbox-overlay" onclick="closeLightbox()">
+          <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+          <div class="lightbox-img-wrap">
+            ${images.length > 1 ? `<button class="lightbox-arrow prev" onclick="lightboxNav(-1, event)">‹</button>` : ""}
+            <img class="lightbox-img" src="${escapeHtml(images[idx])}" alt="${escapeHtml(p.title)}" onclick="event.stopPropagation()" />
+            ${images.length > 1 ? `<button class="lightbox-arrow next" onclick="lightboxNav(1, event)">›</button>` : ""}
+          </div>
+          ${images.length > 1 ? `<div class="lightbox-counter">${idx + 1} / ${images.length}</div>` : ""}
+          ${images.length > 1 ? `
+            <div class="lightbox-thumbs" onclick="event.stopPropagation()">
+              ${images.map((url, i) => `<img class="lightbox-thumb${i === idx ? " active" : ""}" src="${escapeHtml(url)}" onclick="lightboxGoTo(${i}, event)" />`).join("")}
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    function lightboxNav(dir, e) {
+      if (e) e.stopPropagation();
+      const p = propertyCache[lightboxState.propertyId];
+      if (!p) return;
+      lightboxState.index = (lightboxState.index + dir + p.images.length) % p.images.length;
+      renderLightbox();
+    }
+
+    function lightboxGoTo(i, e) {
+      if (e) e.stopPropagation();
+      lightboxState.index = i;
+      renderLightbox();
+    }
+
+    function closeLightbox(e) {
+      if (e) e.stopPropagation();
+      document.getElementById("lightbox-container").innerHTML = "";
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (!document.getElementById("lightbox-container").innerHTML) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") lightboxNav(-1);
+      if (e.key === "ArrowRight") lightboxNav(1);
+    });
+
+    function isValidPhone(phone) {
+      const cleaned = phone.replace(/[\s\-()]/g, "");
+      if (/^\+\d{8,15}$/.test(cleaned)) return true;
+      if (/^0\d{10}$/.test(cleaned)) return true;
+      return false;
+    }
+
+    function normalizeForWhatsApp(phone) {
+      let digits = String(phone || "").replace(/[^\d]/g, "");
+      if (digits.startsWith("0")) digits = "92" + digits.slice(1);
+      return digits;
+    }
+
+    function shareWhatsApp(id) {
+      if (!orgFeatures.whatsappReach) return; // not available on this plan
+      const p = propertyCache[id];
+      if (!p) return;
+
+      const container = document.getElementById("compare-overlay-container");
+      container.innerHTML = `
+        <div class="wa-lead-overlay" onclick="closeWaLeadForm(event)">
+          <div class="wa-lead-modal" onclick="event.stopPropagation()">
+            <h3>Before you go to WhatsApp</h3>
+            <p>Share your details so our consultant knows you're asking about ${escapeHtml(p.property_code)} — ${escapeHtml(p.title)}.</p>
+            <input type="text" id="wa-name" placeholder="Your name" />
+            <input type="tel" id="wa-phone" placeholder="Phone number (e.g. 03001234567)" />
+            <div class="wa-field-error" id="wa-phone-error">Enter a valid phone number — 11 digits (e.g. 03001234567) or with country code (e.g. +923001234567).</div>
+            <div class="wa-lead-actions">
+              <button class="wa-cancel-btn" onclick="closeWaLeadForm(event)">Cancel</button>
+              <button class="wa-continue-btn" onclick="submitWaLeadAndContinue('${id}')">Continue to WhatsApp</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeWaLeadForm(e) {
+      if (e) e.preventDefault();
+      document.getElementById("compare-overlay-container").innerHTML = "";
+    }
+
+    async function submitWaLeadAndContinue(id) {
+      const p = propertyCache[id];
+      if (!p) return;
+      const nameEl = document.getElementById("wa-name");
+      const phoneEl = document.getElementById("wa-phone");
+      const errorEl = document.getElementById("wa-phone-error");
+      const name = nameEl.value.trim();
+      const phone = phoneEl.value.trim();
+
+      if (!phone || !isValidPhone(phone)) {
+        phoneEl.classList.add("invalid");
+        errorEl.style.display = "block";
+        phoneEl.focus();
+        return;
+      }
+
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_submit_lead`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            p_org_id: ORG_ID,
+            p_name: name || null,
+            p_phone: phone,
+            p_property_interested_id: p.id,
+            p_conversation_summary: `Interested in ${p.property_code}, clicked WhatsApp from public listing page.`,
+          }),
+        });
+      } catch (e) {
+        console.error("[WhatsApp lead] submission failed", e);
+      }
+
+      const text = `Hi, I'm interested in ${p.property_code} — ${p.title} (${p.currency} ${Number(p.price).toLocaleString()}). ${window.location.href.split("?")[0]}`;
+      closeWaLeadForm();
+      const targetNumber = normalizeForWhatsApp(orgContact.phone);
+      const waUrl = targetNumber
+        ? `https://wa.me/${targetNumber}?text=${encodeURIComponent(text)}`
+        : `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, "_blank");
+    }
+
+    function requestViewing(id) {
+      const p = propertyCache[id];
+      if (!p) return;
+
+      const today = new Date().toISOString().split("T")[0];
+      const container = document.getElementById("compare-overlay-container");
+      container.innerHTML = `
+        <div class="wa-lead-overlay" onclick="closeViewingForm(event)">
+          <div class="wa-lead-modal" id="vw-modal" onclick="event.stopPropagation()">
+            <h3>Request a viewing</h3>
+            <p>Pick a time for ${escapeHtml(p.property_code)} — ${escapeHtml(p.title)}. Our consultant will confirm with you directly.</p>
+            <input type="text" id="vw-name" placeholder="Your name" />
+            <input type="tel" id="vw-phone" placeholder="Phone number (e.g. 03001234567)" />
+            <div class="wa-field-error" id="vw-phone-error">Enter a valid phone number — 11 digits (e.g. 03001234567) or with country code (e.g. +923001234567).</div>
+            <div class="vw-row">
+              <div>
+                <label class="vw-label" for="vw-date">Preferred date</label>
+                <input type="date" id="vw-date" min="${today}" />
+              </div>
+              <div>
+                <label class="vw-label" for="vw-time">Preferred time</label>
+                <select id="vw-time" class="vw-select">
+                  <option value="">Any time</option>
+                  <option value="Morning (9am–12pm)">Morning (9am–12pm)</option>
+                  <option value="Afternoon (12pm–4pm)">Afternoon (12pm–4pm)</option>
+                  <option value="Evening (4pm–7pm)">Evening (4pm–7pm)</option>
+                </select>
+              </div>
+            </div>
+            <div class="wa-field-error" id="vw-submit-error">Couldn't send your request. Please try again.</div>
+            <div class="wa-lead-actions">
+              <button class="wa-cancel-btn" onclick="closeViewingForm(event)">Cancel</button>
+              <button class="vw-submit-btn" id="vw-submit" onclick="submitViewingRequest('${id}')">Request Viewing</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeViewingForm(e) {
+      if (e) e.preventDefault();
+      document.getElementById("compare-overlay-container").innerHTML = "";
+    }
+
+    async function submitViewingRequest(id) {
+      const p = propertyCache[id];
+      if (!p) return;
+      const nameEl = document.getElementById("vw-name");
+      const phoneEl = document.getElementById("vw-phone");
+      const phoneErr = document.getElementById("vw-phone-error");
+      const submitErr = document.getElementById("vw-submit-error");
+      const btn = document.getElementById("vw-submit");
+      const name = nameEl.value.trim();
+      const phone = phoneEl.value.trim();
+      const date = document.getElementById("vw-date").value;
+      const time = document.getElementById("vw-time").value;
+
+      submitErr.style.display = "none";
+      if (!phone || !isValidPhone(phone)) {
+        phoneEl.classList.add("invalid");
+        phoneErr.style.display = "block";
+        phoneEl.focus();
+        return;
+      }
+      phoneEl.classList.remove("invalid");
+      phoneErr.style.display = "none";
+
+      const when = [date, time].filter(Boolean).join(", ");
+      const summary = `Requested a viewing for ${p.property_code} — ${p.title}` +
+        (when ? `. Preferred time: ${when}.` : ". No preferred time given.") +
+        " Submitted from public listing page.";
+
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_submit_lead`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            p_org_id: ORG_ID,
+            p_name: name || null,
+            p_phone: phone,
+            p_property_interested_id: p.id,
+            p_conversation_summary: summary,
+          }),
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+      } catch (e) {
+        console.error("[Viewing request] submission failed", e);
+        submitErr.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Request Viewing";
+        return;
+      }
+
+      document.getElementById("vw-modal").innerHTML = `
+        <div class="vw-success">
+          <div class="vw-tick">✓</div>
+          <h3>Viewing requested</h3>
+          <p>Thanks${name ? ", " + escapeHtml(name) : ""}! A consultant will contact you shortly to confirm your viewing of ${escapeHtml(p.property_code)}.</p>
+          <div class="wa-lead-actions"><button class="wa-continue-btn" onclick="closeViewingForm(event)">Done</button></div>
+        </div>
+      `;
+    }
+
+    function toggleCompare(id) {
+      if (!orgFeatures.compareEnabled) return; // not available on this plan
+      if (compareSelected.has(id)) {
+        compareSelected.delete(id);
+      } else {
+        if (compareSelected.size >= MAX_COMPARE) {
+          alert(`You can compare up to ${MAX_COMPARE} properties at a time.`);
+          document.getElementById(`cmp-${id}`).checked = false;
+          return;
+        }
+        compareSelected.add(id);
+      }
+      updateCompareBar();
+    }
+
+    function renderCompareChecks() {
+      compareSelected.forEach((id) => {
+        const el = document.getElementById(`cmp-${id}`);
+        if (el) el.checked = true;
+      });
+    }
+
+    function updateCompareBar() {
+      const bar = document.getElementById("compare-bar");
+      const countEl = document.getElementById("compare-count");
+      if (compareSelected.size >= 2) {
+        bar.classList.add("visible");
+        countEl.textContent = `${compareSelected.size} selected`;
+      } else {
+        bar.classList.remove("visible");
+      }
+    }
+
+    function clearCompare() {
+      compareSelected.forEach((id) => {
+        const el = document.getElementById(`cmp-${id}`);
+        if (el) el.checked = false;
+      });
+      compareSelected.clear();
+      updateCompareBar();
+    }
+
+    function showComparison() {
+      const props = Array.from(compareSelected).map((id) => propertyCache[id]).filter(Boolean);
+      if (props.length < 2) return;
+
+      const rows = [
+        ["Price", props.map((p) => escapeHtml(`${p.currency} ${Number(p.price).toLocaleString()}`))],
+        ["Status", props.map((p) => escapeHtml(p.status))],
+        ["Location", props.map((p) => escapeHtml([p.area, p.city].filter(Boolean).join(", ")))],
+        ["Bedrooms", props.map((p) => p.bedrooms ?? "—")],
+        ["Bathrooms", props.map((p) => p.bathrooms ?? "—")],
+        ["Size", props.map((p) => escapeHtml(p.size ? `${p.size} ${p.size_unit || ""}` : "—"))],
+        ["Type", props.map((p) => escapeHtml(p.property_type || "—"))],
+        ["Features", props.map((p) => escapeHtml(p.features && p.features.length ? p.features.join(", ") : "—"))],
+      ];
+
+      const container = document.getElementById("compare-overlay-container");
+      container.innerHTML = `
+        <div class="compare-overlay" onclick="closeComparison(event)">
+          <div class="compare-modal" onclick="event.stopPropagation()">
+            <h2>Comparing ${props.length} properties</h2>
+            <table class="compare-table">
+              <thead>
+                <tr><th></th>${props.map((p) => `<th>${escapeHtml(p.property_code)}<br/>${escapeHtml(p.title)}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${rows.map(([label, values]) => `
+                  <tr><td class="row-label">${escapeHtml(label)}</td>${values.map((v) => `<td>${v}</td>`).join("")}</tr>
+                `).join("")}
+              </tbody>
+            </table>
+            <button class="btn-clear compare-close" onclick="closeComparison()">Close</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeComparison(e) {
+      document.getElementById("compare-overlay-container").innerHTML = "";
+    }
+
+    async function loadListings(filters = {}) {
+      const grid = document.getElementById("listings-grid");
+      grid.innerHTML = `<div class="empty-note">Searching…</div>`;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_property_search`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            p_org_id: ORG_ID,
+            p_city: filters.city || null,
+            p_area: filters.area || null,
+            p_property_type: filters.propertyType || null,
+            p_purpose: filters.purpose || null,
+            p_min_price: filters.minPrice || null,
+            p_max_price: filters.maxPrice || null,
+            p_keyword: filters.keyword || null,
+            p_limit: 24,
+          }),
+        });
+        const properties = await res.json();
+
+        const statEl = document.querySelector("#hero-stats .stat-num");
+        if (statEl) statEl.textContent = (Array.isArray(properties) ? properties.length : 0) + "+";
+
+        if (!Array.isArray(properties) || properties.length === 0) {
+          grid.innerHTML = `<div class="empty-note">No listings match those filters right now.</div>`;
+          return;
+        }
+
+        grid.innerHTML = properties.map((p, i) => renderCard(p, i)).join("");
+        properties.forEach((p) => { propertyCache[p.id] = p; });
+        renderCompareChecks();
+        renderFavButtons();
+      } catch (e) {
+        grid.innerHTML = `<div class="empty-note">Couldn't load listings right now.</div>`;
+        console.error(e);
+      }
+    }
+
+    function applyFilters() {
+      loadListings({
+        city: document.getElementById("f-city").value.trim(),
+        area: document.getElementById("f-area").value.trim(),
+        propertyType: document.getElementById("f-type").value || currentTypeFilter || null,
+        purpose: document.getElementById("f-purpose").value,
+        minPrice: document.getElementById("f-min-price").value,
+        maxPrice: document.getElementById("f-max-price").value,
+      });
+    }
+
+    function filterByType(type) {
+      currentTypeFilter = type;
+      document.getElementById("f-type").value = type;
+
+      document.querySelectorAll('.type-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.type === type);
+      });
+
+      applyFilters();
+    }
+
+    function clearFilters() {
+      document.getElementById("f-city").value = "";
+      document.getElementById("f-area").value = "";
+      document.getElementById("f-type").value = "";
+      document.getElementById("f-purpose").value = "";
+      document.getElementById("f-min-price").value = "";
+      document.getElementById("f-max-price").value = "";
+      currentTypeFilter = "";
+      document.querySelectorAll('.type-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.type === "");
+      });
+      loadListings();
+    }
+
+    function renderCard(p, i = 0) {
+      const images = p.images && p.images.length ? p.images : [];
+      const isFav = favorites.has(p.id);
+      const safeTitle = escapeHtml(p.title);
+
+      const photoContent = images.length > 0
+        ? images.map((url, idx) => `<img class="photo-slide${idx === 0 ? " active" : ""}" src="${escapeHtml(url)}" alt="${safeTitle}" onclick="openLightbox('${p.id}', ${idx}, event)" />`).join("")
+        : "";
+
+      const sliderControls = images.length > 1
+        ? `
+          <button class="slide-arrow prev" onclick="changeSlide('${p.id}', -1, event)">‹</button>
+          <button class="slide-arrow next" onclick="changeSlide('${p.id}', 1, event)">›</button>
+          <div class="slide-nav">
+            ${images.map((_, idx) => `<span class="slide-dot${idx === 0 ? " active" : ""}" onclick="goToSlide('${p.id}', ${idx}, event)"></span>`).join("")}
+          </div>
+        `
+        : "";
+
+      return `
+        <div class="plot-card" style="animation-delay: ${Math.min(i * 0.06, 0.4)}s">
+          <div class="plot-photo" id="photo-${p.id}" data-current="0"
+               onmouseenter="startAutoplay('${p.id}')" onmouseleave="stopAutoplay('${p.id}')">
+            ${photoContent}
+            <span class="status-pin">${escapeHtml(p.status)}</span>
+            ${sliderControls}
+            <button class="fav-btn${isFav ? " active" : ""}" id="fav-${p.id}" onclick="toggleFavorite('${p.id}')">♥</button>
+            <label class="compare-check">
+              <input type="checkbox" onchange="toggleCompare('${p.id}')" id="cmp-${p.id}" /> Compare
+            </label>
+          </div>
+          <div class="plot-body">
+            <div class="plot-code">${escapeHtml(p.property_code)}</div>
+            <div class="plot-title">${safeTitle}</div>
+            <div class="plot-loc">${escapeHtml([p.area, p.city].filter(Boolean).join(", "))}</div>
+            <div class="plot-dims">
+              <span>${p.bedrooms ?? "–"}<span class="dim-label">Beds</span></span>
+              <span>${p.bathrooms ?? "–"}<span class="dim-label">Baths</span></span>
+              <span>${p.size ?? "–"} ${escapeHtml(p.size_unit ?? "")}<span class="dim-label">Size</span></span>
+            </div>
+            <div class="plot-price">
+              <span><span class="cur mono">${escapeHtml(p.currency)}</span><span class="amount">${Number(p.price).toLocaleString()}</span></span>
+            </div>
+            ${orgContact.name || orgContact.phone ? `
+              <div class="owner-contact">
+                <div class="oc-label">Contact</div>
+                ${orgContact.name ? `<div class="oc-name">${escapeHtml(orgContact.name)}</div>` : ""}
+                ${orgContact.phone ? `<div class="oc-phone">${escapeHtml(orgContact.phone)}</div>` : ""}
+              </div>
+            ` : ""}
+            <div class="card-share-row">
+              <button class="share-btn whatsapp" onclick="shareWhatsApp('${p.id}')">WhatsApp</button>
+              <button class="share-btn viewing" onclick="requestViewing('${p.id}')">Request Viewing</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadBranding() {
+      const logoEl = document.querySelector(".logo");
+      const logoSubEl = document.querySelector(".logo-sub");
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_get_org_branding`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ p_org_id: ORG_ID }),
+        });
+        const data = await res.json();
+        const branding = Array.isArray(data) ? data[0] : data;
+
+        if (branding?.name) {
+          document.title = `${branding.name} — Verified Property Intelligence`;
+          if (logoEl && !branding.logo_url) logoEl.textContent = branding.name;
+        }
+        if (orgFeatures.customBranding && branding?.logo_url && logoEl) {
+          logoEl.innerHTML = `<img src="${escapeHtml(branding.logo_url)}" alt="${escapeHtml(branding.name || "Logo")}" style="max-height:32px;max-width:180px;object-fit:contain;" />`;
+        }
+        orgContact = { name: branding?.contact_name || "", phone: branding?.contact_phone || "" };
+      } catch (e) {
+        console.error("[Branding] failed to load", e);
+      } finally {
+        if (logoEl) logoEl.classList.add("ready");
+        if (logoSubEl) logoSubEl.classList.add("ready");
+      }
+    }
+
+    // Called by the embedded chat widget (widget.js) when it suggests a
+    // property that isn't currently visible in the on-screen grid — re-filters
+    // the listing in place and scrolls to it. No page navigation involved.
+    window.__aiwFocusProperty = async function (code) {
+      await loadListings({ keyword: code });
+
+      const banner = document.getElementById("direct-link-banner");
+      if (banner) {
+        banner.style.display = "block";
+        banner.innerHTML = `<a href="#" class="back-to-all" onclick="showAllListings(event)">← Back to all listings</a>`;
+      }
+
+      const match = Object.values(propertyCache).find((p) => p.property_code === code);
+      if (match) {
+        const photoEl = document.getElementById(`photo-${match.id}`);
+        const card = photoEl ? photoEl.closest(".plot-card") : null;
+        if (card) {
+          card.classList.add("highlighted");
+          setTimeout(() => card.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+        }
+      }
+    };
+
+    async function handleDirectLink() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("property");
+      if (!code) {
+        loadListings();
+        return;
+      }
+
+      await loadListings({ keyword: code });
+
+      const banner = document.getElementById("direct-link-banner");
+      banner.style.display = "block";
+      banner.innerHTML = `<a href="#" class="back-to-all" onclick="showAllListings(event)">← Back to all listings</a>`;
+
+      const match = Object.values(propertyCache).find((p) => p.property_code === code);
+      if (match) {
+        const photoEl = document.getElementById(`photo-${match.id}`);
+        const card = photoEl ? photoEl.closest(".plot-card") : null;
+        if (card) {
+          card.classList.add("highlighted");
+          setTimeout(() => card.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+        }
+      }
+    }
+
+    function showAllListings(e) {
+      e.preventDefault();
+      document.getElementById("direct-link-banner").style.display = "none";
+      window.history.replaceState({}, "", window.location.pathname);
+      loadListings();
+    }
+
+    // --- Access gate: mirrors the same org_is_active() check the admin
+    // dashboard and backend RPCs enforce, so a suspended org's public
+    // widget stops working too, not just their internal dashboard. ---
+    async function checkOrgActive() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/org_is_active`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ p_org_id: ORG_ID }),
+        });
+        if (!res.ok) return true; // fail open on a check error — don't block by accident
+        const data = await res.json();
+        return data === true;
+      } catch (e) {
+        console.error("[org_is_active] check failed", e);
+        return true; // fail open on a network error
+      }
+    }
+
+    function showSuspendedScreen() {
+      document.body.innerHTML = `
+        <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; background: var(--stone); padding: 24px;">
+          <div style="background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 40px; max-width: 420px; text-align:center;">
+            <h1 style="font-size: 22px; margin-bottom: 12px;">Temporarily Unavailable</h1>
+            <p style="font-size: 14px; color: var(--slate); line-height: 1.6; margin: 0;">
+              This property listing service isn't active right now. Please check back later or contact the agency directly.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function loadChatWidget() {
+      const s = document.createElement("script");
+      s.src = "widget.js";
+      s.setAttribute("data-org-id", ORG_ID);
+      s.setAttribute("data-supabase-url", SUPABASE_URL);
+      s.setAttribute("data-supabase-anon-key", SUPABASE_ANON_KEY);
+      s.setAttribute("data-function-url", `${SUPABASE_URL}/functions/v1/property-search`);
+      s.setAttribute("data-agent-name", "Sarah");
+      document.body.appendChild(s);
+    }
+
+    (async function init() {
+      const active = await checkOrgActive();
+      if (!active) {
+        showSuspendedScreen();
+        return;
+      }
+      await loadOrgFeatures();
+      await loadBranding();
+      await handleDirectLink();
+      loadChatWidget();
+
+      // Keep checking in the background — if the org gets blocked while
+      // this tab is already open, switch to the suspended screen without
+      // needing a manual refresh.
+      setInterval(async () => {
+        const stillActive = await checkOrgActive();
+        if (!stillActive) {
+          showSuspendedScreen();
+        }
+      }, 10000);
+    })();
+  </script>
+</body>
+</html>

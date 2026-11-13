@@ -269,7 +269,7 @@
       // Open the tab right away (inside the click) so popup blockers allow it.
       const win = window.open("", "_blank");
       try {
-        const { data, error } = await supabase.functions.invoke("impersonate", {
+        const { data, error } = await supabase.functions.invoke("super-task", {
           body: { orgId, redirectTo: DASHBOARD_URL },
         });
         if (error) throw error;

@@ -780,43 +780,51 @@
       window.open(waUrl, "_blank");
     }
 
+    // Same flow as the "Request a viewing" button in the Sarah chat widget:
+    // 1) public_submit_lead creates/updates the lead and returns its id
+    // 2) public_request_viewing attaches the preferred time to that lead
+    let lastViewingLeadInfo = null; // remembered for this page session
+
     function requestViewing(id) {
       const p = propertyCache[id];
       if (!p) return;
 
-      const today = new Date().toISOString().split("T")[0];
+      const known = lastViewingLeadInfo || {};
+      const now = new Date();
+      const minLocal = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
       const container = document.getElementById("compare-overlay-container");
       container.innerHTML = `
         <div class="wa-lead-overlay" onclick="closeViewingForm(event)">
           <div class="wa-lead-modal" id="vw-modal" onclick="event.stopPropagation()">
             <h3>Request a viewing</h3>
-            <p>Pick a time for ${escapeHtml(p.property_code)} — ${escapeHtml(p.title)}. Our consultant will confirm with you directly.</p>
-            <input type="text" id="vw-name" placeholder="Your name" />
-            <input type="tel" id="vw-phone" placeholder="Phone number (e.g. 03001234567)" />
+            <p>${lastViewingLeadInfo ? "Confirm your details for" : "Share your details and a consultant will reach out about"} ${escapeHtml(p.property_code)} — ${escapeHtml(p.title)}.</p>
+            <input type="text" id="vw-name" placeholder="Your name" value="${escapeHtml(known.name || "")}" />
+            <input type="tel" id="vw-phone" placeholder="Phone number (e.g. 03001234567)" value="${escapeHtml(known.phone || "")}" />
             <div class="wa-field-error" id="vw-phone-error">Enter a valid phone number — 11 digits (e.g. 03001234567) or with country code (e.g. +923001234567).</div>
-            <div class="vw-row">
-              <div>
-                <label class="vw-label" for="vw-date">Preferred date</label>
-                <input type="date" id="vw-date" min="${today}" />
-              </div>
-              <div>
-                <label class="vw-label" for="vw-time">Preferred time</label>
-                <select id="vw-time" class="vw-select">
-                  <option value="">Any time</option>
-                  <option value="Morning (9am–12pm)">Morning (9am–12pm)</option>
-                  <option value="Afternoon (12pm–4pm)">Afternoon (12pm–4pm)</option>
-                  <option value="Evening (4pm–7pm)">Evening (4pm–7pm)</option>
-                </select>
-              </div>
-            </div>
+            <label class="vw-label" for="vw-timeline">How soon are you looking to move forward?</label>
+            <select id="vw-timeline" class="vw-select">
+              <option value="">Select one</option>
+              <option value="Ready within 30 days">Ready within 30 days</option>
+              <option value="1-6 months">1–6 months</option>
+              <option value="Just exploring for now">Just exploring for now</option>
+            </select>
+            <label class="vw-label" for="vw-time">Want to schedule a viewing? (optional)</label>
+            <input type="datetime-local" id="vw-time" min="${minLocal}" />
             <div class="wa-field-error" id="vw-submit-error">Couldn't send your request. Please try again.</div>
             <div class="wa-lead-actions">
               <button class="wa-cancel-btn" onclick="closeViewingForm(event)">Cancel</button>
-              <button class="vw-submit-btn" id="vw-submit" onclick="submitViewingRequest('${id}')">Request Viewing</button>
+              <button class="vw-submit-btn" id="vw-submit" onclick="submitViewingRequest('${id}')">Request contact</button>
             </div>
           </div>
         </div>
       `;
+
+      const phoneEl = document.getElementById("vw-phone");
+      phoneEl.addEventListener("input", () => {
+        phoneEl.classList.remove("invalid");
+        document.getElementById("vw-phone-error").style.display = "none";
+      });
     }
 
     function closeViewingForm(e) {
@@ -827,15 +835,14 @@
     async function submitViewingRequest(id) {
       const p = propertyCache[id];
       if (!p) return;
-      const nameEl = document.getElementById("vw-name");
       const phoneEl = document.getElementById("vw-phone");
       const phoneErr = document.getElementById("vw-phone-error");
       const submitErr = document.getElementById("vw-submit-error");
       const btn = document.getElementById("vw-submit");
-      const name = nameEl.value.trim();
+      const name = document.getElementById("vw-name").value.trim();
       const phone = phoneEl.value.trim();
-      const date = document.getElementById("vw-date").value;
-      const time = document.getElementById("vw-time").value;
+      const timeline = document.getElementById("vw-timeline").value;
+      const viewingTime = document.getElementById("vw-time").value;
 
       submitErr.style.display = "none";
       if (!phone || !isValidPhone(phone)) {
@@ -844,46 +851,68 @@
         phoneEl.focus();
         return;
       }
-      phoneEl.classList.remove("invalid");
-      phoneErr.style.display = "none";
-
-      const when = [date, time].filter(Boolean).join(", ");
-      const summary = `Requested a viewing for ${p.property_code} — ${p.title}` +
-        (when ? `. Preferred time: ${when}.` : ". No preferred time given.") +
-        " Submitted from public listing page.";
 
       btn.disabled = true;
       btn.textContent = "Sending…";
+
+      const headers = {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      };
+
+      let leadId = null;
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_submit_lead`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          },
+          headers,
           body: JSON.stringify({
             p_org_id: ORG_ID,
             p_name: name || null,
             p_phone: phone,
+            p_timeline: timeline || null,
             p_property_interested_id: p.id,
-            p_conversation_summary: summary,
+            p_conversation_summary: `Interested in ${p.property_code}, requested a viewing from public listing page.`,
           }),
         });
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        leadId = typeof data === "string" ? data : null;
       } catch (e) {
-        console.error("[Viewing request] submission failed", e);
+        console.error("[Viewing request] lead submission failed", e);
+      }
+
+      if (!leadId) {
         submitErr.style.display = "block";
         btn.disabled = false;
-        btn.textContent = "Request Viewing";
+        btn.textContent = "Request contact";
         return;
       }
 
+      if (viewingTime) {
+        try {
+          await fetch(`${SUPABASE_URL}/rest/v1/rpc/public_request_viewing`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              p_org_id: ORG_ID,
+              p_lead_id: leadId,
+              p_property_id: p.id,
+              p_requested_time: new Date(viewingTime).toISOString(),
+            }),
+          });
+        } catch (e) {
+          console.error("[Viewing request] viewing time failed", e);
+        }
+      }
+
+      lastViewingLeadInfo = { name, phone };
       document.getElementById("vw-modal").innerHTML = `
         <div class="vw-success">
           <div class="vw-tick">✓</div>
-          <h3>Viewing requested</h3>
-          <p>Thanks${name ? ", " + escapeHtml(name) : ""}! A consultant will contact you shortly to confirm your viewing of ${escapeHtml(p.property_code)}.</p>
+          <h3>${viewingTime ? "Viewing requested" : "Request sent"}</h3>
+          <p>${viewingTime
+            ? "Got it — your viewing request has been sent, and a consultant will confirm the time with you shortly."
+            : "Got it — a consultant will contact you about this property shortly."}</p>
           <div class="wa-lead-actions"><button class="wa-continue-btn" onclick="closeViewingForm(event)">Done</button></div>
         </div>
       `;
